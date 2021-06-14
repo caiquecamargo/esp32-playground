@@ -1,4 +1,6 @@
 #include <WiFi.h>
+#include <WebServer.h>
+#include "Json.h"
 
 class CustomServer {
   public:
@@ -10,4 +12,6 @@ class CustomServer {
     const char *apPassword;
     IPAddress ip;
     void createAccessPoint();
+    void createRoutes();
+    void initServer();
 };

@@ -1,35 +1,15 @@
-#include <WebServer.h>
-#include <ArduinoJson.h>
 #include "CustomServer.h"
 
 WebServer webServer(80);
-
-StaticJsonDocument<250> jsonDocument;
-char buffer[250];
-
-void createJson(const char *response) {
-  jsonDocument.clear();
-  jsonDocument["response"] = response;
-  serializeJson(jsonDocument, buffer);
-}
+JSON json;
 
 void simpleResponse() {
   Serial.println("Creating response...");
 
   const char *response = "Just a simple test";
-  createJson(response);
+  json.stringfy(response);
   
-  webServer.send(200, "application/json", buffer);
-}
-
-void createRoutes() {
-  Serial.println("Creating Server routes...");
-  webServer.on("/test", simpleResponse);
-}
-
-void initServer() {
-  Serial.println("Initializing Server...");
-  webServer.begin();
+  webServer.send(200, "application/json", json.buffer);
 }
 
 CustomServer::CustomServer(const char *apSsid, const char *apPassword) {
@@ -44,6 +24,16 @@ void CustomServer::createAccessPoint() {
   ip = WiFi.softAPIP();
   Serial.print("IP Address: ");
   Serial.println(ip);
+}
+
+void CustomServer::createRoutes() {
+  Serial.println("Creating Server routes...");
+  webServer.on("/test", simpleResponse);
+}
+
+void CustomServer::initServer() {
+  Serial.println("Initializing Server...");
+  webServer.begin();
 }
 
 void CustomServer::init() {
