@@ -1,6 +1,7 @@
 #include <WiFi.h>
 #include <WebServer.h>
 #include "Json.h"
+#include "FileHandler.h"
 
 class CustomServer {
   public:

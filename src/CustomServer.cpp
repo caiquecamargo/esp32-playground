@@ -1,5 +1,4 @@
 #include "CustomServer.h"
-#include "SPIFFS.h"
 
 WebServer webServer(80);
 JSON json;
@@ -18,29 +17,13 @@ void simpleResponse() {
   webServer.send(200, "application/json", json.buffer);
 }
 
-void fileHandler(const char* fileName, const char* fileType) {
-  File file = SPIFFS.open(fileName);
-  if (!file) {
-    Serial.println("Failed to open file for read");
-    return;
-  }
-
-  size_t fileSize = file.size();
-  char buffer[fileSize + 1];
-  file.read((uint8_t *)buffer, fileSize);
-  buffer[fileSize] = '\0';
-
-  file.close();
-
-  webServer.send(200, fileType, buffer);
-}
-
 void homeHandler() {
-  fileHandler("/home.html", "text/html");
+  Serial.println("Request on /");
+  FileHandler::sendFile("/home.html", "text/html", webServer);
 }
 
 void homeCssHandler() {
-  fileHandler("/home.css", "text/css");
+  FileHandler::sendFile("/home.css", "text/css", webServer);
 }
 
 CustomServer::CustomServer(const char *apSsid, const char *apPassword) {
@@ -58,11 +41,6 @@ void CustomServer::createAccessPoint() {
 }
 
 void CustomServer::createRoutes() {
-  if(!SPIFFS.begin()) {
-    Serial.println("An error has ocurred while mounting SPIFFS");
-    return;
-  }
-  
   Serial.println("Creating Server routes...");
   webServer.on("/test", simpleResponse);
 
