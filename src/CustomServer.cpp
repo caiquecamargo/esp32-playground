@@ -12,7 +12,7 @@ void simpleResponse() {
   Serial.println("Creating response...");
 
   const char *response = "Just a simple test";
-  json.stringfy(response);
+  json.stringify(response);
   
   webServer.send(200, "application/json", json.buffer);
 }

@@ -1,6 +1,6 @@
 #include "Json.h"
 
-void JSON::stringfy(const char *response) {
+void JSON::stringify(const char *response) {
   jsonDocument.clear();
   jsonDocument["response"] = response;
   serializeJson(jsonDocument, buffer);
