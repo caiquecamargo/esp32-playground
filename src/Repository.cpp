@@ -1,18 +1,23 @@
 #include "Repository.h"
 
-const static int ID_COLUMN = 0;
+const static int CARD_ID_COLUMN = 0;
 const static int NAME_COLUMN = 1;
-const static int CARD_ID_COLUMN = 2;
+
+const static String CREATE_TABLE_SQL = "CREATE TABLE IF NOT EXISTS %s (card_id PRIMARY KEY, name);";
+const static String CREATE_SQL = "INSERT INTO %s VALUES(%s, %s)";
+const static String UPDATE_SQL = "UPDATE %s SET name = %s WHERE card_id = %s";
+const static String FIND_SQL = "SELECT * FROM %s";
+const static String FIND_BY_ID_SQL = "SELECT * FROM %s WHERE card_id = %s";
+const static String DELETE_SQL = "DELETE FROM %s WHERE card_id = %s";
 
 int callback(void *data, int argc, char **argv, char **azColName) {
-  std::vector<DBCONTENT> *dbcontentList = (std::vector<DBCONTENT> *) data;
-  DBCONTENT dbcontent;
+  std::vector<DB_DATA> *resultSet = (std::vector<DB_DATA> *) data;
+  DB_DATA dbcontent;
 
-  dbcontent.id = (int) argv[ID_COLUMN];
-  dbcontent.name = argv[NAME_COLUMN];
   dbcontent.cardId = argv[CARD_ID_COLUMN];
+  dbcontent.name = argv[NAME_COLUMN];
 
-  dbcontentList->push_back(dbcontent);
+  resultSet->push_back(dbcontent);
 
   return 0;
 };
@@ -79,11 +84,16 @@ void Repository::close() {
   sqlite3_close(db);
 };
 
+void Repository::cleanResultSet() {
+  resultSet.clear();
+}
+
 int Repository::exec(const char *sql) {
   Serial.println(sql);
 
+  cleanResultSet();
   long start = micros();
-  int rc = sqlite3_exec(db, sql, callback, (void*) &dbcontentList, &errMsg);
+  int rc = sqlite3_exec(db, sql, callback, (void*) &resultSet, &errMsg);
 
   if (rc != SQLITE_OK) {
       Serial.printf("SQL error: %s\n", errMsg);
@@ -95,14 +105,57 @@ int Repository::exec(const char *sql) {
   Serial.print(F("Time taken: "));
   Serial.println(micros()-start);
   Serial.println();
+  printResultSet();
 
   return rc;
 };
 
-void Repository::print() {
-  for (DBCONTENT content : dbcontentList) {
-    Serial.printf("ID: %d, NAME: %s, CARDID: %s\n", content.id, content.name.c_str(), content.cardId.c_str());
+void Repository::printResultSet() {
+  for (DB_DATA content : resultSet) {
+    Serial.printf("CARDID: %d, NAME: %s\n", content.cardId.c_str(), content.name.c_str());
   }
 
   Serial.println();
 }
+
+int Repository::createTableIfNotExists() {
+  char *sql;
+  sprintf(sql, CREATE_TABLE_SQL.c_str(), tableName);
+
+  return exec(sql);
+};
+
+int Repository::create(DB_DATA data) {
+  char *sql;
+  sprintf(sql, CREATE_SQL.c_str(), tableName, data.cardId.c_str(), data.name.c_str());
+
+  return exec(sql);
+};
+
+int Repository::update(String cardId, String name) {
+  char *sql;
+  sprintf(sql, UPDATE_SQL.c_str(), tableName, name.c_str(), cardId.c_str());
+
+  return exec(sql);
+};
+
+int Repository::findAll() {
+  char *sql;
+  sprintf(sql, FIND_SQL.c_str(), tableName);
+
+  return exec(sql);
+};
+
+int Repository::findById(String cardId) {
+  char *sql;
+  sprintf(sql, FIND_BY_ID_SQL.c_str(), tableName, cardId.c_str());
+
+  return exec(sql);
+};
+
+int Repository::deleteItem(String cardId) {
+  char *sql;
+  sprintf(sql, DELETE_SQL.c_str(), tableName, cardId.c_str());
+
+  return exec(sql);
+};
