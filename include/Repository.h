@@ -5,30 +5,30 @@
 #include <string>
 
 struct DB_DATA {
-  String cardId;
-  String name;
+  std::string cardId;
+  std::string name;
 };
 
 class Repository {
   public:
-    Repository(const char *fileName, const char *tableName);
+    Repository(std::string fileName, std::string tableName);
     std::vector<DB_DATA> resultSet;
-    int exec(const char *sql);
+    int exec(std::string sql);
     int isOpen();
     void close();
     void printResultSet();
     int exists(std::string cardId);
     int create(DB_DATA data);
-    int update(String cardId, String name);
+    int update(DB_DATA data);
     int findAll();
-    int findById(String cardId);
-    int deleteItem(String cardId);
+    int findById(std::string cardId);
+    int deleteItem(std::string cardId);
   private:
     sqlite3 *db;
     char *errMsg = 0;
     int opened;
-    const char *fileName;
-    const char *tableName;
+    std::string fileName;
+    std::string tableName;
     void open();
     int initialize();
     int createTableIfNotExists();
