@@ -2,6 +2,7 @@
 #include "SPIFFS.h"
 #include <sqlite3.h>
 #include <vector>
+#include <string>
 
 struct DB_DATA {
   String cardId;
@@ -10,12 +11,13 @@ struct DB_DATA {
 
 class Repository {
   public:
-    Repository(const char *fileName);
+    Repository(const char *fileName, const char *tableName);
     std::vector<DB_DATA> resultSet;
     int exec(const char *sql);
     int isOpen();
     void close();
     void printResultSet();
+    int exists(std::string cardId);
     int create(DB_DATA data);
     int update(String cardId, String name);
     int findAll();
