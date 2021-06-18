@@ -4,16 +4,25 @@
 #include <vector>
 #include <string>
 
+struct DB_DATA {
+  std::string cardId;
+  std::string name;
+};
+
 bool replace(std::string& str, const std::string& from, const std::string& to);
 
-template <class T>
 class Repository {
   public:
     Repository(std::string fileName, std::string tableName);
-    std::vector<T> resultSet;
+    std::vector<DB_DATA> resultSet;
     int isOpen();
     void close();
     void printResultSet();
+    int create(DB_DATA data);
+    int update(DB_DATA data);
+    int findAll();
+    int findById(std::string cardId);
+    int deleteItem(std::string cardId);
   protected:
     sqlite3 *db;
     char *errMsg = 0;
