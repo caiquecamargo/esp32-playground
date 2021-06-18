@@ -32,7 +32,7 @@ class Repository {
     int initialize();
     int createTableIfNotExists();
     void cleanResultSet();
-    int callback(void *data, int argc, char **argv, char **azColName);
-    void toObject(DB_DATA *dbcontent, char **argv);
+    static int callback(void *data, int argc, char **argv, char **azColName);
+    void PopulateResultSet(std::vector<std::vector<std::string>> *temp);
     int exec(std::string sql);
 };  

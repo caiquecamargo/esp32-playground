@@ -15,12 +15,16 @@ void setup() {
   DB_DATA data;
   data.cardId = "123456789";
   data.name = "João das neves";
+
+  DB_DATA data2;
+  data2.cardId = "13156498";
+  data2.name = "Maria das Graças";
+
   db.create(data);
-  db.findById(data.cardId);
-  data.name = "João Maranhão";
-  db.update(data);
+  db.create(data2);
   db.findAll();
   db.deleteItem(data.cardId);
+  db.deleteItem(data2.cardId);
   db.findAll();
   db.close();
 }

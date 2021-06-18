@@ -89,18 +89,30 @@ void Repository::cleanResultSet() {
   resultSet.clear();
 }
 
-void Repository::toObject(DB_DATA *dbcontent, char **argv) {
-  dbcontent->cardId = argv[CARD_ID_COLUMN];
-  dbcontent->name = argv[NAME_COLUMN];
+void Repository::PopulateResultSet(std::vector<std::vector<std::string>> *temp) {
+  if (temp->size() == 0) return;
+
+  while (!temp->empty()) {
+    std::vector<std::string> dataTemp = temp->back();
+    DB_DATA dbdata;
+    dbdata.name = dataTemp.back();
+    dataTemp.pop_back();
+    dbdata.cardId = dataTemp.back();
+    dataTemp.pop_back();
+
+    resultSet.push_back(dbdata);
+    temp->pop_back();
+  }
 };
 
 int Repository::callback(void *data, int argc, char **argv, char **azColName) {
-  std::vector<DB_DATA> *resultSet = (std::vector<DB_DATA> *) data;
-  DB_DATA dbcontent;
+  std::vector<std::vector<std::string>> *temp = (std::vector<std::vector<std::string>> *) data;
 
-  toObject(&dbcontent, argv);
-
-  resultSet->push_back(dbcontent);
+  std::vector<std::string> dataTemp;
+  for (int i = 0; i < argc; i++) {
+    dataTemp.push_back(argv[i]);
+  }
+  temp->push_back(dataTemp);
 
   return 0;
 };
@@ -110,7 +122,10 @@ int Repository::exec(std::string sql) {
 
   cleanResultSet();
   long start = micros();
-  int rc = sqlite3_exec(db, sql.c_str(), callback, (void*) &resultSet, &errMsg);
+  std::vector<std::vector<std::string>> temp;
+  int rc = sqlite3_exec(db, sql.c_str(), callback, (void*) &temp, &errMsg);
+
+  PopulateResultSet(&temp);
 
   if (rc != SQLITE_OK) {
       Serial.printf("SQL error: %s\n", errMsg);
