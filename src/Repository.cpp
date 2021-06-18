@@ -44,7 +44,8 @@ void printSPIFFSFiles()  {
    }
 }
 
-Repository::Repository(std::string fileName, std::string tableName) {
+template <class T>
+Repository<T>::Repository(std::string fileName, std::string tableName) {
   this->fileName = fileName;
   this->tableName = tableName;
 
@@ -55,7 +56,8 @@ Repository::Repository(std::string fileName, std::string tableName) {
   printSPIFFSFiles();
 };
 
-int Repository::initialize() {
+template <class T>
+int Repository<T>::initialize() {
   if (!SPIFFS.begin()) {
     Serial.println("Failed to mount file system.");
     return 0;
@@ -66,7 +68,8 @@ int Repository::initialize() {
   return 1;
 }
 
-void Repository::open() {
+template <class T>
+void Repository<T>::open() {
   int rc = sqlite3_open(fileName.c_str(), &db);
   if (rc) {
     Serial.printf("Can't open database: %s\n", sqlite3_errmsg(db));
@@ -77,24 +80,28 @@ void Repository::open() {
   }
 };  
 
-int Repository::isOpen() {
+template <class T>
+int Repository<T>::isOpen() {
   return opened;
 }
 
-void Repository::close() {
+template <class T>
+void Repository<T>::close() {
   sqlite3_close(db);
 };
 
-void Repository::cleanResultSet() {
+template <class T>
+void Repository<T>::cleanResultSet() {
   resultSet.clear();
 }
 
-void Repository::PopulateResultSet(std::vector<std::vector<std::string>> *temp) {
+template <class T>
+void Repository<T>::PopulateResultSet(std::vector<std::vector<std::string>> *temp) {
   if (temp->size() == 0) return;
 
   while (!temp->empty()) {
     std::vector<std::string> dataTemp = temp->back();
-    DB_DATA dbdata;
+    T dbdata;
     dbdata.name = dataTemp.back();
     dataTemp.pop_back();
     dbdata.cardId = dataTemp.back();
@@ -105,7 +112,8 @@ void Repository::PopulateResultSet(std::vector<std::vector<std::string>> *temp) 
   }
 };
 
-int Repository::callback(void *data, int argc, char **argv, char **azColName) {
+template <class T>
+int Repository<T>::callback(void *data, int argc, char **argv, char **azColName) {
   std::vector<std::vector<std::string>> *temp = (std::vector<std::vector<std::string>> *) data;
 
   std::vector<std::string> dataTemp;
@@ -117,7 +125,8 @@ int Repository::callback(void *data, int argc, char **argv, char **azColName) {
   return 0;
 };
 
-int Repository::exec(std::string sql) {
+template <class T>
+int Repository<T>::exec(std::string sql) {
   Serial.println(sql.c_str());
 
   cleanResultSet();
@@ -142,23 +151,26 @@ int Repository::exec(std::string sql) {
   return rc;
 };
 
-void Repository::printResultSet() {
+template <class T>
+void Repository<T>::printResultSet() {
   Serial.println("DB Search Result.");
-  for (DB_DATA content : resultSet) {
+  for (T content : resultSet) {
     Serial.printf("CARDID: %s, NAME: %s\n", content.cardId.c_str(), content.name.c_str());
   }
 
   Serial.println();
 }
 
-int Repository::createTableIfNotExists() {
+template <class T>
+int Repository<T>::createTableIfNotExists() {
   std::string sql = CREATE_TABLE_SQL;
   replace(sql, "{0}", tableName);
 
   return exec(sql);
 };
 
-int Repository::exists(std::string cardId) {
+template <class T>
+int Repository<T>::exists(std::string cardId) {
   std::string sql = EXISTS_SQL;
   replace(sql, "{0}", tableName);
   replace(sql, "{1}", cardId);
@@ -168,49 +180,54 @@ int Repository::exists(std::string cardId) {
   return resultSet.size();
 }
 
-int Repository::create(DB_DATA data) {
-  if (exists(data.cardId)) return 0;
+// template <class T>
+// int Repository<T>::create(T data) {
+//   if (exists(data.cardId)) return 0;
 
-  std::string sql = CREATE_SQL;
-  replace(sql, "{0}", tableName);
-  replace(sql, "{1}", data.cardId);
-  replace(sql, "{2}", data.name);
+//   std::string sql = CREATE_SQL;
+//   replace(sql, "{0}", tableName);
+//   replace(sql, "{1}", data.cardId);
+//   replace(sql, "{2}", data.name);
 
-  return exec(sql);
-};
+//   return exec(sql);
+// };
 
-int Repository::update(DB_DATA data) {
-  if (!exists(data.cardId)) return 0;
+// template <class T>
+// int Repository<T>::update(T data) {
+//   if (!exists(data.cardId)) return 0;
 
-  std::string sql = UPDATE_SQL;
-  replace(sql, "{0}", tableName);
-  replace(sql, "{1}", data.name);
-  replace(sql, "{2}", data.cardId);
+//   std::string sql = UPDATE_SQL;
+//   replace(sql, "{0}", tableName);
+//   replace(sql, "{1}", data.name);
+//   replace(sql, "{2}", data.cardId);
 
-  return exec(sql);
-};
+//   return exec(sql);
+// };
 
-int Repository::findAll() {
-  std::string sql = FIND_SQL;
-  replace(sql, "{0}", tableName);
+// template <class T>
+// int Repository<T>::findAll() {
+//   std::string sql = FIND_SQL;
+//   replace(sql, "{0}", tableName);
 
-  return exec(sql);
-};
+//   return exec(sql);
+// };
 
-int Repository::findById(std::string cardId) {
-  std::string sql = FIND_BY_ID_SQL;
-  replace(sql, "{0}", tableName);
-  replace(sql, "{1}", cardId);
+// template <class T>
+// int Repository<T>::findById(std::string cardId) {
+//   std::string sql = FIND_BY_ID_SQL;
+//   replace(sql, "{0}", tableName);
+//   replace(sql, "{1}", cardId);
 
-  return exec(sql);
-};
+//   return exec(sql);
+// };
 
-int Repository::deleteItem(std::string cardId) {
-  if (!exists(cardId)) return 0;
+// template <class T>
+// int Repository<T>::deleteItem(std::string cardId) {
+//   if (!exists(cardId)) return 0;
 
-  std::string sql = DELETE_SQL;
-  replace(sql, "{0}", tableName);
-  replace(sql, "{1}", cardId);
+//   std::string sql = DELETE_SQL;
+//   replace(sql, "{0}", tableName);
+//   replace(sql, "{1}", cardId);
 
-  return exec(sql);
-};
+//   return exec(sql);
+// };
