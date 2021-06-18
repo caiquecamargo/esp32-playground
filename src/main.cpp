@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include "CustomServer.h"
-#include "Repository.h"
+#include "User.h"
 
 const char *apSsid = "esp32-playground";
 const char *apPassword = "123456789";
@@ -11,7 +11,7 @@ void setup() {
   Serial.begin(115200);
   server.init();
 
-  Repository db = Repository("/spiffs/test.db", "test");
+  User db = User("/spiffs/test.db");
   DB_DATA data;
   data.cardId = "123456789";
   data.name = "João das neves";

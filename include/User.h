@@ -1,6 +1,6 @@
 #include "Repository.h"
 
-class User : Repository {
+class User : public Repository {
   public:
-    User(std::string fileName) : Repository(fileName, "user_table");
+    User(std::string fileName);
 };
