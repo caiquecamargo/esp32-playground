@@ -13,7 +13,6 @@ class Repository {
   public:
     Repository(std::string fileName, std::string tableName);
     std::vector<DB_DATA> resultSet;
-    int exec(std::string sql);
     int isOpen();
     void close();
     void printResultSet();
@@ -23,7 +22,7 @@ class Repository {
     int findAll();
     int findById(std::string cardId);
     int deleteItem(std::string cardId);
-  private:
+  protected:
     sqlite3 *db;
     char *errMsg = 0;
     int opened;
@@ -33,4 +32,7 @@ class Repository {
     int initialize();
     int createTableIfNotExists();
     void cleanResultSet();
+    int callback(void *data, int argc, char **argv, char **azColName);
+    void toObject(DB_DATA *dbcontent, char **argv);
+    int exec(std::string sql);
 };  

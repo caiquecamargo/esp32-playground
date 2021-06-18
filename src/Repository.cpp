@@ -19,22 +19,6 @@ bool replace(std::string& str, const std::string& from, const std::string& to) {
     return true;
 }
 
-int counter = 0;
-
-int callback(void *data, int argc, char **argv, char **azColName) {
-  std::vector<DB_DATA> *resultSet = (std::vector<DB_DATA> *) data;
-  DB_DATA dbcontent;
-
-  counter++;
-
-  dbcontent.cardId = argv[CARD_ID_COLUMN];
-  dbcontent.name = argv[NAME_COLUMN];
-
-  resultSet->push_back(dbcontent);
-
-  return 0;
-};
-
 void printSPIFFSFiles()  {
   File root = SPIFFS.open("/");
    if (!root) {
@@ -104,6 +88,22 @@ void Repository::close() {
 void Repository::cleanResultSet() {
   resultSet.clear();
 }
+
+void Repository::toObject(DB_DATA *dbcontent, char **argv) {
+  dbcontent->cardId = argv[CARD_ID_COLUMN];
+  dbcontent->name = argv[NAME_COLUMN];
+};
+
+int Repository::callback(void *data, int argc, char **argv, char **azColName) {
+  std::vector<DB_DATA> *resultSet = (std::vector<DB_DATA> *) data;
+  DB_DATA dbcontent;
+
+  toObject(&dbcontent, argv);
+
+  resultSet->push_back(dbcontent);
+
+  return 0;
+};
 
 int Repository::exec(std::string sql) {
   Serial.println(sql.c_str());
