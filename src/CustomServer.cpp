@@ -1,7 +1,7 @@
-#include "CustomServer.h"
+#include "customServer.h"
 
 WebServer webServer(80);
-JSON json;
+UserSerializer userSerializer;
 
 const char* www_username = "admin";
 const char* www_password = "esp32";
@@ -12,9 +12,15 @@ void simpleResponse() {
   Serial.println("Creating response...");
 
   const char *response = "Just a simple test";
-  json.stringify(response);
-  
-  webServer.send(200, "application/json", json.buffer);
+  User user;
+  user.cardId = "123456789";
+  user.name = "Maria das Graças";
+
+  userSerializer.create(user);
+
+  std::string jsonResponse = userSerializer.stringify(response);
+
+  webServer.send(200, "application/json", jsonResponse.c_str());
 }
 
 void homeHandler() {

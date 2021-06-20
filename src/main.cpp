@@ -12,21 +12,21 @@ void setup() {
   server.init();
 
   Repository db = Repository("/spiffs/test.db", "user_table");
-  DB_DATA data;
-  data.cardId = "123456789";
-  data.name = "João das neves";
+  // DB_DATA data;
+  // data.cardId = "123456789";
+  // data.name = "João das neves";
 
-  DB_DATA data2;
-  data2.cardId = "13156498";
-  data2.name = "Maria das Graças";
+  // DB_DATA data2;
+  // data2.cardId = "13156498";
+  // data2.name = "Maria das Graças";
 
-  db.create(data);
-  db.create(data2);
-  db.findAll();
-  db.deleteItem(data.cardId);
-  db.deleteItem(data2.cardId);
-  db.findAll();
-  db.close();
+  // db.create(data);
+  // db.create(data2);
+  // db.findAll();
+  // db.deleteItem(data.cardId);
+  // db.deleteItem(data2.cardId);
+  // db.findAll();
+  // db.close();
 }
 
 void loop() {

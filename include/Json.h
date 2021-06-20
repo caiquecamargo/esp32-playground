@@ -3,6 +3,7 @@
 class JSON {
   public:
     StaticJsonDocument<250> jsonDocument;
-    char buffer[250];
-    void stringify(const char *response);
+    virtual void createJson() = 0;
+    void clear();
+    std::string stringify(const char *response);
 };

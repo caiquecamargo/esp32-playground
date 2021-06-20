@@ -1,4 +1,4 @@
-#include "FileHandler.h"
+#include "fileHandler.h"
 
 void FileHandler::sendFile(const char* fileName, const char* fileType, WebServer& webServer) {
   if(!SPIFFS.begin()) {
