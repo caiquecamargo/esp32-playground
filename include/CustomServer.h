@@ -14,5 +14,5 @@ class CustomServer {
     IPAddress ip;
     void createAccessPoint();
     void createRoutes();
-    void initServer();
+    void begin();
 };

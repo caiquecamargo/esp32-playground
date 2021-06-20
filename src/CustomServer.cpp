@@ -36,6 +36,15 @@ void jsHandler() {
   FileHandler::sendFile("/home.js", "text/js", webServer);
 }
 
+void createUserHandler() {
+  if (webServer.args() == 0) {
+    Serial.println("Has no args");
+  }
+
+  Serial.println(webServer.arg(0));
+  Serial.println(webServer.args());
+}
+
 CustomServer::CustomServer(const char *apSsid, const char *apPassword) {
   this->apSsid = apSsid;
   this->apPassword = apPassword;
@@ -56,17 +65,18 @@ void CustomServer::createRoutes() {
 
   webServer.on("/", indexHandler);
   webServer.on("/home.css", cssHandler);
+
+  webServer.on("/user", createUserHandler);
 }
 
-void CustomServer::initServer() {
-  Serial.println("Initializing Server...");
+void CustomServer::begin() {
   webServer.begin();
 }
 
 void CustomServer::init() {
   createAccessPoint();
   createRoutes();
-  initServer();
+  begin();
 }
 
 void CustomServer::handleClient() {
