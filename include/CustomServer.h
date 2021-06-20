@@ -1,7 +1,7 @@
 #include <WiFi.h>
 #include <WebServer.h>
-#include "userSerializer.h"
-#include "fileHandler.h"
+#include "UserSerializer.h"
+#include "FileHandler.h"
 
 class CustomServer {
   public:

@@ -1,4 +1,4 @@
-#include "customServer.h"
+#include "CustomServer.h"
 
 WebServer webServer(80);
 UserSerializer userSerializer;
@@ -28,7 +28,7 @@ void indexHandler() {
   FileHandler::sendFile("/home.html", "text/html", webServer);
 }
 
-void cssCssHandler() {
+void cssHandler() {
   FileHandler::sendFile("/home.css", "text/css", webServer);
 }
 
@@ -55,7 +55,7 @@ void CustomServer::createRoutes() {
   webServer.on("/test", simpleResponse);
 
   webServer.on("/", indexHandler);
-  webServer.on("/home.css", indexCssHandler);
+  webServer.on("/home.css", cssHandler);
 }
 
 void CustomServer::initServer() {

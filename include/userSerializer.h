@@ -1,5 +1,5 @@
-#include "json.h"
-#include "user.h"
+#include "Json.h"
+#include "User.h"
 #include <vector>
 
 class UserSerializer : public JSON {
