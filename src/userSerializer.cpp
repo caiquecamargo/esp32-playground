@@ -17,6 +17,14 @@ void UserSerializer::create(User user) {
   users.push_back(user);
 }
 
+void UserSerializer::create(std::vector<User> usersList) {
+  erase();
+
+  for (User& user : usersList) {
+    users.push_back(user);
+  }
+}
+
 void UserSerializer::add(User user) {
   users.push_back(user);
 }

@@ -23,13 +23,17 @@ void simpleResponse() {
   webServer.send(200, "application/json", jsonResponse.c_str());
 }
 
-void homeHandler() {
+void indexHandler() {
   Serial.println("Request on /");
   FileHandler::sendFile("/home.html", "text/html", webServer);
 }
 
-void homeCssHandler() {
+void cssCssHandler() {
   FileHandler::sendFile("/home.css", "text/css", webServer);
+}
+
+void jsHandler() {
+  FileHandler::sendFile("/home.js", "text/js", webServer);
 }
 
 CustomServer::CustomServer(const char *apSsid, const char *apPassword) {
@@ -50,8 +54,8 @@ void CustomServer::createRoutes() {
   Serial.println("Creating Server routes...");
   webServer.on("/test", simpleResponse);
 
-  webServer.on("/", homeHandler);
-  webServer.on("/home.css", homeCssHandler);
+  webServer.on("/", indexHandler);
+  webServer.on("/home.css", indexCssHandler);
 }
 
 void CustomServer::initServer() {
