@@ -1,55 +1,57 @@
 #include "server/CustomServer.h"
+#include "time.h"
 
 WebServer webServer(80);
 UserSerializer userSerializer;
+UserService userService = UserService("/spiffs/test.db");
 
 const char* www_username = "admin";
 const char* www_password = "esp32";
 
-void simpleResponse() {
-  if (!webServer.authenticate(www_username, www_password)) return webServer.requestAuthentication();
-
-  Serial.println("Creating response...");
-
-  const char *response = "Just a simple test";
-  User user;
-  user.cardId = "123456789";
-  user.name = "Maria das Graças";
-
-  userSerializer.create(user);
-
-  std::string jsonResponse = userSerializer.stringify(response);
-
-  webServer.send(200, "application/json", jsonResponse.c_str());
+void serverLog() {
+  Serial.printf("%s request on: %s\n", webServer.method(), webServer.uri().c_str());
 }
 
 void indexHandler() {
-  Serial.println("Request on /");
-  FileHandler::sendFile("/home.html", "text/html", webServer);
+  serverLog();
+  FileHandler::sendFile("/index.html", "text/html", webServer);
 }
 
 void cssHandler() {
-  FileHandler::sendFile("/home.css", "text/css", webServer);
+  serverLog();
+  FileHandler::sendFile("/index.css", "text/css", webServer);
 }
 
-void jsHandler() {
-  FileHandler::sendFile("/home.js", "text/js", webServer);
+void indexJsHandler() {
+  serverLog();
+  FileHandler::sendFile("/index.js", "text/js", webServer);
+}
+
+void vendorJsHandler() {
+  serverLog();
+  FileHandler::sendFile("/vendor.js", "text/js", webServer);
 }
 
 void createUserHandler() {
-  Serial.println("Request on /user");
-  if (webServer.args() == 0) Serial.println("Has no args");
-  Serial.print("size: ");
-  Serial.println(webServer.args());
+  serverLog();
 
-  for (int i = 0; i < webServer.args(); i++) {
-    Serial.print("arg: ");
-    Serial.println(webServer.arg(i));
-    Serial.print("argName: ");
-    Serial.println(webServer.argName(i));
+  srand(time(NULL));
+
+  if (!webServer.hasArg("name")) {
+    webServer.send(400, "text/plain", "User does have a name to complete the task!");
+    return;
   }
 
-  webServer.send(200, "text/plain", "Deu certo");
+  User user;
+  user.name = webServer.arg(0).c_str();
+  user.cardId = rand() % 1000 + 1000;
+
+  // if (userService.create(user)){
+  //   std::string jsonUser = userSerializer.createJson(user);
+  //   webServer.send(200, "application/Json", jsonUser.c_str());
+  // } else {
+  //   webServer.send(500, "text/plain", "Error on create User.");
+  // }
 }
 
 CustomServer::CustomServer(const char *apSsid, const char *apPassword) {
@@ -68,12 +70,13 @@ void CustomServer::createAccessPoint() {
 
 void CustomServer::createRoutes() {
   Serial.println("Creating Server routes...");
-  webServer.on("/test", simpleResponse);
 
   webServer.on("/", indexHandler);
-  webServer.on("/home.css", cssHandler);
+  webServer.on("/index.css", cssHandler);
+  webServer.on("/vendor.js", indexJsHandler);
+  webServer.on("/index.js", vendorJsHandler);
 
-  webServer.on("/user", createUserHandler);
+  webServer.on("/user", HTTP_POST, createUserHandler);
 }
 
 void CustomServer::begin() {

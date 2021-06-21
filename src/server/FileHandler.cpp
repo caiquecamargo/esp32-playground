@@ -1,11 +1,6 @@
 #include "server/FileHandler.h"
 
 void FileHandler::sendFile(const char* fileName, const char* fileType, WebServer& webServer) {
-  if(!SPIFFS.begin()) {
-    Serial.println("An error has ocurred while mounting SPIFFS");
-    return;
-  }
-
   Serial.print("Reading file ");
   Serial.println(fileName);
   File file = SPIFFS.open(fileName);

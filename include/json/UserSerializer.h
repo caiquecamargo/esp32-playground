@@ -4,11 +4,6 @@
 
 class UserSerializer : public JSON {
   public:
-    std::vector<User> users;
-    void create(User user);
-    void create(std::vector<User> user);
-    void add(User user);
-    void add(std::vector<User> user);
-    void erase();
-    void createJson();
+    std::string createJson(User user);
+    std::string createJson(std::vector<User> users);
 };

@@ -4,16 +4,8 @@ http://192.168.4.1/
 
 http://192.168.4.1/test
 
-###
-
-http://192.168.4.1/user
-Content-Type: application/json
-
-{
-  "name": "Caique"
-}
 
 ###
 
-http://192.168.4.1/user?username=name
+POST http://192.168.4.1/user?username=name
 

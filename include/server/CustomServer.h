@@ -2,6 +2,7 @@
 #include <WebServer.h>
 #include "json/UserSerializer.h"
 #include "FileHandler.h"
+#include "repository/UserService.h"
 
 class CustomServer {
   public:
