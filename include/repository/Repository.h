@@ -14,27 +14,22 @@ bool replace(std::string& str, const std::string& from, const std::string& to);
 class Repository {
   public:
     Repository(std::string fileName, std::string tableName);
-    std::vector<DB_DATA> resultSet;
     int isOpen();
     void close();
-    void printResultSet();
-    int create(DB_DATA data);
-    int update(DB_DATA data);
-    int findAll();
-    int findById(std::string cardId);
-    int deleteItem(std::string cardId);
+    virtual void printResultSet() = 0;
   protected:
     sqlite3 *db;
     char *errMsg = 0;
     int opened;
     std::string fileName;
     std::string tableName;
+    void init();
     void open();
     int initialize();
-    int createTableIfNotExists();
-    void cleanResultSet();
+    virtual int createTableIfNotExists() = 0;
+    virtual void cleanResultSet() = 0;
     static int callback(void *data, int argc, char **argv, char **azColName);
-    void PopulateResultSet(std::vector<std::vector<std::string>> *temp);
+    virtual void PopulateResultSet(std::vector<std::vector<std::string>> *temp) = 0;
     int exec(std::string sql);
-    int exists(std::string cardId);
+    virtual int exists(std::string cardId) = 0;
 };  

@@ -1,15 +1,12 @@
 #include "repository/Repository.h"
 
-const static int CARD_ID_COLUMN = 0;
-const static int NAME_COLUMN = 1;
-
-const static std::string CREATE_TABLE_SQL = "CREATE TABLE IF NOT EXISTS {0} (card_id, name);";
-const static std::string EXISTS_SQL = "SELECT * FROM {0} WHERE card_id = '{1}'";
-const static std::string CREATE_SQL = "INSERT INTO {0} VALUES('{1}', '{2}')";
-const static std::string UPDATE_SQL = "UPDATE {0} SET name = '{1}' WHERE card_id = '{2}'";
-const static std::string FIND_SQL = "SELECT * FROM {0}";
-const static std::string FIND_BY_ID_SQL = "SELECT * FROM {0} WHERE card_id = '{1}'";
-const static std::string DELETE_SQL = "DELETE FROM {0} WHERE card_id = '{1}'";
+// const static std::string CREATE_TABLE_SQL = "CREATE TABLE IF NOT EXISTS {0} (card_id, name);";
+// const static std::string EXISTS_SQL = "SELECT * FROM {0} WHERE card_id = '{1}'";
+// const static std::string CREATE_SQL = "INSERT INTO {0} VALUES('{1}', '{2}')";
+// const static std::string UPDATE_SQL = "UPDATE {0} SET name = '{1}' WHERE card_id = '{2}'";
+// const static std::string FIND_SQL = "SELECT * FROM {0}";
+// const static std::string FIND_BY_ID_SQL = "SELECT * FROM {0} WHERE card_id = '{1}'";
+// const static std::string DELETE_SQL = "DELETE FROM {0} WHERE card_id = '{1}'";
 
 bool replace(std::string& str, const std::string& from, const std::string& to) {
     size_t start_pos = str.find(from);
@@ -48,12 +45,15 @@ Repository::Repository(std::string fileName, std::string tableName) {
   this->fileName = fileName;
   this->tableName = tableName;
 
+  printSPIFFSFiles();
+};
+
+void Repository::init() {
   if (initialize()) {
     open();
     createTableIfNotExists();
   }
-  printSPIFFSFiles();
-};
+}
 
 int Repository::initialize() {
   if (!SPIFFS.begin()) {
@@ -62,7 +62,7 @@ int Repository::initialize() {
   }
 
   sqlite3_initialize();
-  Serial.println("SQL LITE Inicialized!");
+  Serial.println("SQLITE Inicialized!");
   return 1;
 }
 
@@ -85,25 +85,25 @@ void Repository::close() {
   sqlite3_close(db);
 };
 
-void Repository::cleanResultSet() {
-  resultSet.clear();
-}
+// void Repository::cleanResultSet() {
+//   resultSet.clear();
+// }
 
-void Repository::PopulateResultSet(std::vector<std::vector<std::string>> *temp) {
-  if (temp->size() == 0) return;
+// void Repository::PopulateResultSet(std::vector<std::vector<std::string>> *temp) {
+//   if (temp->size() == 0) return;
 
-  while (!temp->empty()) {
-    std::vector<std::string> dataTemp = temp->back();
-    DB_DATA dbdata;
-    dbdata.name = dataTemp.back();
-    dataTemp.pop_back();
-    dbdata.cardId = dataTemp.back();
-    dataTemp.pop_back();
+//   while (!temp->empty()) {
+//     std::vector<std::string> dataTemp = temp->back();
+//     DB_DATA dbdata;
+//     dbdata.name = dataTemp.back();
+//     dataTemp.pop_back();
+//     dbdata.cardId = dataTemp.back();
+//     dataTemp.pop_back();
 
-    resultSet.push_back(dbdata);
-    temp->pop_back();
-  }
-};
+//     resultSet.push_back(dbdata);
+//     temp->pop_back();
+//   }
+// };
 
 int Repository::callback(void *data, int argc, char **argv, char **azColName) {
   std::vector<std::vector<std::string>> *temp = (std::vector<std::vector<std::string>> *) data;
@@ -123,7 +123,7 @@ int Repository::exec(std::string sql) {
   cleanResultSet();
   long start = micros();
   std::vector<std::vector<std::string>> temp;
-  int rc = sqlite3_exec(db, sql.c_str(), callback, (void*) &temp, &errMsg);
+  int rc = sqlite3_exec(db, sql.c_str(), Repository::callback, (void*) &temp, &errMsg);
 
   PopulateResultSet(&temp);
 
@@ -137,84 +137,84 @@ int Repository::exec(std::string sql) {
   Serial.print(F("Time taken: "));
   Serial.println(micros()-start);
   Serial.println();
-  if (resultSet.size() != 0) printResultSet();
+  printResultSet();
 
   return rc;
 };
 
-void Repository::printResultSet() {
-  Serial.println("DB Search Result.");
-  for (DB_DATA content : resultSet) {
-    Serial.printf("CARDID: %s, NAME: %s\n", content.cardId.c_str(), content.name.c_str());
-  }
+// void Repository::printResultSet() {
+//   Serial.println("DB Search Result.");
+//   for (DB_DATA content : resultSet) {
+//     Serial.printf("CARDID: %s, NAME: %s\n", content.cardId.c_str(), content.name.c_str());
+//   }
 
-  Serial.println();
-}
+//   Serial.println();
+// }
 
-int Repository::createTableIfNotExists() {
-  std::string sql = CREATE_TABLE_SQL;
-  replace(sql, "{0}", tableName);
+// int Repository::createTableIfNotExists() {
+//   std::string sql = CREATE_TABLE_SQL;
+//   replace(sql, "{0}", tableName);
 
-  return exec(sql);
-};
+//   return exec(sql);
+// };
 
-int Repository::exists(std::string cardId) {
-  std::string sql = EXISTS_SQL;
-  replace(sql, "{0}", tableName);
-  replace(sql, "{1}", cardId);
+// int Repository::exists(std::string cardId) {
+//   std::string sql = EXISTS_SQL;
+//   replace(sql, "{0}", tableName);
+//   replace(sql, "{1}", cardId);
 
-  exec(sql);
+//   exec(sql);
 
-  return resultSet.size();
-}
+//   return resultSet.size();
+// }
 
-int Repository::create(DB_DATA data) {
-  if (exists(data.cardId)) return 0;
+// int Repository::create(DB_DATA data) {
+//   if (exists(data.cardId)) return 0;
 
-  std::string sql = CREATE_SQL;
-  replace(sql, "{0}", tableName);
-  replace(sql, "{1}", data.cardId);
-  replace(sql, "{2}", data.name);
+//   std::string sql = CREATE_SQL;
+//   replace(sql, "{0}", tableName);
+//   replace(sql, "{1}", data.cardId);
+//   replace(sql, "{2}", data.name);
 
-  return exec(sql);
-};
-
-
-int Repository::update(DB_DATA data) {
-  if (!exists(data.cardId)) return 0;
-
-  std::string sql = UPDATE_SQL;
-  replace(sql, "{0}", tableName);
-  replace(sql, "{1}", data.name);
-  replace(sql, "{2}", data.cardId);
-
-  return exec(sql);
-};
+//   return exec(sql);
+// };
 
 
-int Repository::findAll() {
-  std::string sql = FIND_SQL;
-  replace(sql, "{0}", tableName);
+// int Repository::update(DB_DATA data) {
+//   if (!exists(data.cardId)) return 0;
 
-  return exec(sql);
-};
+//   std::string sql = UPDATE_SQL;
+//   replace(sql, "{0}", tableName);
+//   replace(sql, "{1}", data.name);
+//   replace(sql, "{2}", data.cardId);
 
-
-int Repository::findById(std::string cardId) {
-  std::string sql = FIND_BY_ID_SQL;
-  replace(sql, "{0}", tableName);
-  replace(sql, "{1}", cardId);
-
-  return exec(sql);
-};
+//   return exec(sql);
+// };
 
 
-int Repository::deleteItem(std::string cardId) {
-  if (!exists(cardId)) return 0;
+// int Repository::findAll() {
+//   std::string sql = FIND_SQL;
+//   replace(sql, "{0}", tableName);
 
-  std::string sql = DELETE_SQL;
-  replace(sql, "{0}", tableName);
-  replace(sql, "{1}", cardId);
+//   return exec(sql);
+// };
 
-  return exec(sql);
-};
+
+// int Repository::findById(std::string cardId) {
+//   std::string sql = FIND_BY_ID_SQL;
+//   replace(sql, "{0}", tableName);
+//   replace(sql, "{1}", cardId);
+
+//   return exec(sql);
+// };
+
+
+// int Repository::deleteItem(std::string cardId) {
+//   if (!exists(cardId)) return 0;
+
+//   std::string sql = DELETE_SQL;
+//   replace(sql, "{0}", tableName);
+//   replace(sql, "{1}", cardId);
+
+//   return exec(sql);
+// };

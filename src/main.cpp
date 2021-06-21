@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include "server/CustomServer.h"
-#include "repository/Repository.h"
+#include "repository/UserService.h"
 
 const char *apSsid = "esp32-playground";
 const char *apPassword = "123456789";
@@ -11,22 +11,7 @@ void setup() {
   Serial.begin(115200);
   server.init();
 
-  Repository db = Repository("/spiffs/test.db", "user_table");
-  // DB_DATA data;
-  // data.cardId = "123456789";
-  // data.name = "João das neves";
-
-  // DB_DATA data2;
-  // data2.cardId = "13156498";
-  // data2.name = "Maria das Graças";
-
-  // db.create(data);
-  // db.create(data2);
-  // db.findAll();
-  // db.deleteItem(data.cardId);
-  // db.deleteItem(data2.cardId);
-  // db.findAll();
-  // db.close();
+  UserService db = UserService("/spiffs/test.db");
 }
 
 void loop() {
