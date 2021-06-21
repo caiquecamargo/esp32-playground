@@ -1,6 +1,6 @@
 #include <Arduino.h>
-#include "CustomServer.h"
-#include "Repository.h"
+#include "server/CustomServer.h"
+#include "repository/Repository.h"
 
 const char *apSsid = "esp32-playground";
 const char *apPassword = "123456789";

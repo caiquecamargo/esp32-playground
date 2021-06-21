@@ -1,4 +1,4 @@
-#include "CustomServer.h"
+#include "server/CustomServer.h"
 
 WebServer webServer(80);
 UserSerializer userSerializer;
@@ -37,12 +37,19 @@ void jsHandler() {
 }
 
 void createUserHandler() {
-  if (webServer.args() == 0) {
-    Serial.println("Has no args");
+  Serial.println("Request on /user");
+  if (webServer.args() == 0) Serial.println("Has no args");
+  Serial.print("size: ");
+  Serial.println(webServer.args());
+
+  for (int i = 0; i < webServer.args(); i++) {
+    Serial.print("arg: ");
+    Serial.println(webServer.arg(i));
+    Serial.print("argName: ");
+    Serial.println(webServer.argName(i));
   }
 
-  Serial.println(webServer.arg(0));
-  Serial.println(webServer.args());
+  webServer.send(200, "text/plain", "Deu certo");
 }
 
 CustomServer::CustomServer(const char *apSsid, const char *apPassword) {
