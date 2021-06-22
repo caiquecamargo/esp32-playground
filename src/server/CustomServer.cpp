@@ -1,63 +1,42 @@
 #include "server/CustomServer.h"
 #include "time.h"
 
-WebServer webServer(80);
+AsyncWebServer webServer(80);
 UserSerializer userSerializer;
 UserService userService = UserService("/spiffs/test.db");
 
 const char* www_username = "admin";
 const char* www_password = "esp32";
 
-void serverLog() {
-  HTTPMethod method = webServer.method();
-  Log::logS("Server", (std::string) http_method_str(method) + " request on: " + webServer.uri().c_str());
+void serverLog(std::string method, std::string uri) {
+  Log::logS("Server", method + " request on: " + uri);
 }
 
-void indexHandler() {
-  serverLog();
-  FileHandler::sendFile("/index.html", "text/html", webServer);
-}
-
-void cssHandler() {
-  serverLog();
-  FileHandler::sendFile("/index.css", "text/css", webServer);
-}
-
-void indexJsHandler() {
-  serverLog();
-  FileHandler::sendFile("/index.js", "text/js", webServer);
-}
-
-void vendorJsHandler() {
-  serverLog();
-  FileHandler::sendFile("/vendor.js", "text/js", webServer);
-}
-
-void notFoundHandler() {
-  serverLog();
+void notFoundHandler(AsyncWebServerRequest *request) {
+  serverLog(request->methodToString(), request->host().c_str());
   Log::logS("Server", "Resource not found");
-  webServer.send(404, "text/plain", "Resource not found or not exists.");
+  request->send(404, "text/plain", "Resource not found or not exists.");
 }
 
-void createUserHandler() {
-  serverLog();
+void createUserHandler(AsyncWebServerRequest *request) {
+  serverLog(request->methodToString(), request->host().c_str());
 
   srand(time(NULL));
 
-  if (!webServer.hasArg("name")) {
-    webServer.send(400, "text/plain", "User does have a name to complete the task!");
+  if (!request->hasParam("name")) {
+    request->send(400, "text/plain", "User does have a name to complete the task!");
     return;
   }
 
   User user;
-  user.name = webServer.arg(0).c_str();
+  user.name = request->getParam("name")->value().c_str();
   user.cardId = String(rand() % 1000 + 1000).c_str();
 
   if (userService.create(user)){
     std::string jsonUser = userSerializer.createJson(user);
-    webServer.send(200, "application/Json", jsonUser.c_str());
+    request->send(200, "application/Json", jsonUser.c_str());
   } else {
-    webServer.send(500, "text/plain", "Error on create User.");
+    request->send(500, "text/plain", "Error on create User.");
   }
 }
 
@@ -77,10 +56,10 @@ void CustomServer::createAccessPoint() {
 void CustomServer::createRoutes() {
   log("Creating Server routes...");
 
-  webServer.on("/", indexHandler);
-  webServer.on("/index.css", cssHandler);
-  // webServer.on("/vendor.js", indexJsHandler);
-  // webServer.on("/index.js", vendorJsHandler);
+  webServer.serveStatic("/", SPIFFS, "/index.html");
+  webServer.serveStatic("/index.css", SPIFFS, "/index.css");
+  webServer.serveStatic("/vendor.js", SPIFFS, "/vendor.js");
+  webServer.serveStatic("/index.js", SPIFFS, "/index.js");
 
   webServer.on("/user", HTTP_POST, createUserHandler);
   webServer.on("/user", HTTP_GET, createUserHandler);
@@ -99,6 +78,6 @@ void CustomServer::init() {
   userService.init();
 }
 
-void CustomServer::handleClient() {
-  webServer.handleClient();
-}
+// void CustomServer::handleClient() {
+//   webServer.handleClient();
+// }
