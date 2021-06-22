@@ -1,11 +1,10 @@
 #include "server/FileHandler.h"
 
 void FileHandler::sendFile(const char* fileName, const char* fileType, WebServer& webServer) {
-  Serial.print("Reading file ");
-  Serial.println(fileName);
+  Log::logS("FileHandler", "Reading file " + (std::string) fileName);
   File file = SPIFFS.open(fileName);
   if (!file) {
-    Serial.println("Failed to open file for read");
+    Log::logS("FileHandler", "Failed to open file for read");
     return;
   }
 
@@ -13,6 +12,8 @@ void FileHandler::sendFile(const char* fileName, const char* fileType, WebServer
   char buffer[fileSize];
   file.read((uint8_t *)buffer, fileSize);
   buffer[fileSize] = '\0';
+
+  Serial.println(buffer);
 
   file.close();
 

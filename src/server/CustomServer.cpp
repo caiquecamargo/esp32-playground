@@ -10,7 +10,7 @@ const char* www_password = "esp32";
 
 void serverLog() {
   HTTPMethod method = webServer.method();
-  Serial.printf("%s request on: %s\n", http_method_str(method), webServer.uri().c_str());
+  Log::logS("Server", (std::string) http_method_str(method) + " request on: " + webServer.uri().c_str());
 }
 
 void indexHandler() {
@@ -59,23 +59,21 @@ void createUserHandler() {
   }
 }
 
-CustomServer::CustomServer(const char *apSsid, const char *apPassword) {
+CustomServer::CustomServer(const char *apSsid, const char *apPassword) : Log("Server") {
   this->apSsid = apSsid;
   this->apPassword = apPassword;
-  Serial.println("Instanciando CustomServer");
 }
 
 void CustomServer::createAccessPoint() {
-  Serial.println("Creating AccessPoint...");
+  log("Creating AccessPoint...");
   WiFi.mode(WIFI_AP);
   WiFi.softAP(apSsid, apPassword);
   ip = WiFi.softAPIP();
-  Serial.print("IP Address: ");
-  Serial.println(ip);
+  // log("IP Address: " + ip);
 }
 
 void CustomServer::createRoutes() {
-  Serial.println("Creating Server routes...");
+  log("Creating Server routes...");
 
   webServer.on("/", indexHandler);
   // webServer.on("/index.css", cssHandler);

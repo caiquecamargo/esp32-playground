@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include "SPIFFS.h"
 #include "server/CustomServer.h"
+#include "log/Log.h"
 
 const char *apSsid = "esp32-playground";
 const char *apPassword = "123456789";
@@ -10,23 +11,20 @@ CustomServer server(apSsid, apPassword);
 void printSPIFFSFiles()  {
   File root = SPIFFS.open("/");
   if (!root) {
-    Serial.println("- failed to open directory");
+    Log::logS("SPIFFS", "Failed to open directory");
     return;
   }
   if (!root.isDirectory()) {
-    Serial.println(" - not a directory");
+    Log::logS("SPIFFS", "Mot a directory");
     return;
   }
   File file = root.openNextFile();
   while (file) {
     if (file.isDirectory()) {
-      Serial.print("  DIR : ");
-      Serial.println(file.name());
+      Log::logS("SPIFFS", "DIR: " + (std::string) file.name());
     } else {
-      Serial.print("  FILE: ");
-      Serial.print(file.name());
-      Serial.print("\tSIZE: ");
-      Serial.println(file.size());
+      char* fileSize = (char *) file.size();
+      Log::logS("SPIFFS", "FILE: " + (std::string) file.name() + " - Size: " + (std::string) fileSize);
     }
     file = root.openNextFile();
   }
@@ -34,9 +32,10 @@ void printSPIFFSFiles()  {
 
 void setup() {
   Serial.begin(115200);
+  // configureDateTime();
 
   if (!SPIFFS.begin()) {
-    Serial.println("Failed to mount file system.");
+    Log::logS("SPIFFS", "Failed to mount file system.");
   }
 
   // printSPIFFSFiles();

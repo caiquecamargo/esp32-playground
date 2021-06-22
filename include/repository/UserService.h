@@ -1,7 +1,7 @@
 #include "Repository.h" 
 #include "model/User.h"
 
-class UserService : public Repository {
+class UserService : public Repository  {
   public: 
     std::vector<User> resultSet;
     UserService(std::string fileName);

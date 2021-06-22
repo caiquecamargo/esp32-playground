@@ -3,15 +3,11 @@
 #include <sqlite3.h>
 #include <vector>
 #include <string>
-
-struct DB_DATA {
-  std::string cardId;
-  std::string name;
-};
+#include "log/Log.h"
 
 bool replace(std::string& str, const std::string& from, const std::string& to);
 
-class Repository {
+class Repository : public Log {
   public:
     Repository(std::string fileName, std::string tableName);
     int isOpen();

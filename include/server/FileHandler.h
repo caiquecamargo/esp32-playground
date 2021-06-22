@@ -1,5 +1,6 @@
 #include "SPIFFS.h"
 #include <WebServer.h>
+#include "log/Log.h"
 
 class FileHandler {
   public:

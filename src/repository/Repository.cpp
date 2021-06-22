@@ -8,7 +8,7 @@ bool replace(std::string& str, const std::string& from, const std::string& to) {
     return true;
 }
 
-Repository::Repository(std::string fileName, std::string tableName) {
+Repository::Repository(std::string fileName, std::string tableName) : Log("Repository") {
   this->fileName = fileName;
   this->tableName = tableName;
 };
@@ -22,17 +22,17 @@ void Repository::init() {
 
 int Repository::initialize() {
   sqlite3_initialize();
-  Serial.println("SQLITE Inicialized!");
+  log("SQLITE Inicialized!");
   return 1;
 }
 
 void Repository::open() {
   int rc = sqlite3_open(fileName.c_str(), &db);
   if (rc) {
-    Serial.printf("Can't open database: %s\n", sqlite3_errmsg(db));
+    log("Can't open database: " + (std::string) sqlite3_errmsg(db));
     opened = 0;
   } else {
-    Serial.println("Open database successfully!\n");
+    log("Open database successfully!");
     opened = 1;
   }
 };  
@@ -58,26 +58,20 @@ int Repository::callback(void *data, int argc, char **argv, char **azColName) {
 };
 
 int Repository::exec(std::string sql) {
-  Serial.println(sql.c_str());
+  log("Performing SQL - " + sql);
 
   cleanResultSet();
-  long start = micros();
   std::vector<std::vector<std::string>> temp;
   int rc = sqlite3_exec(db, sql.c_str(), Repository::callback, (void*) &temp, &errMsg);
 
   PopulateResultSet(&temp);
 
   if (rc != SQLITE_OK) {
-      Serial.printf("SQL error: %s\n", errMsg);
+      log("SQL error: " + (std::string) errMsg); 
       sqlite3_free(errMsg);
   } else {
-      Serial.printf("Operation done successfully\n");
+      log("Operation done successfully");
   }
-
-  Serial.print(F("Time taken: "));
-  Serial.println(micros()-start);
-  Serial.println();
-  printResultSet();
 
   return rc == SQLITE_OK;
 };

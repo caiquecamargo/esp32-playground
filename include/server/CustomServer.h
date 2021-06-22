@@ -3,8 +3,9 @@
 #include "json/UserSerializer.h"
 #include "FileHandler.h"
 #include "repository/UserService.h"
+#include "log/Log.h"
 
-class CustomServer {
+class CustomServer : public Log {
   public:
     CustomServer(const char *apSsid, const char *apPassword);
     void init();
