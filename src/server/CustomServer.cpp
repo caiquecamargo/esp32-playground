@@ -9,7 +9,8 @@ const char* www_username = "admin";
 const char* www_password = "esp32";
 
 void serverLog() {
-  Serial.printf("%s request on: %s\n", webServer.method(), webServer.uri().c_str());
+  HTTPMethod method = webServer.method();
+  Serial.printf("%s request on: %s\n", http_method_str(method), webServer.uri().c_str());
 }
 
 void indexHandler() {
@@ -32,6 +33,10 @@ void vendorJsHandler() {
   FileHandler::sendFile("/vendor.js", "text/js", webServer);
 }
 
+void notFoundHandler() {
+  webServer.send(404, "text/plain", "Resource not found or not exists.");
+}
+
 void createUserHandler() {
   serverLog();
 
@@ -44,19 +49,20 @@ void createUserHandler() {
 
   User user;
   user.name = webServer.arg(0).c_str();
-  user.cardId = rand() % 1000 + 1000;
+  user.cardId = String(rand() % 1000 + 1000).c_str();
 
-  // if (userService.create(user)){
-  //   std::string jsonUser = userSerializer.createJson(user);
-  //   webServer.send(200, "application/Json", jsonUser.c_str());
-  // } else {
-  //   webServer.send(500, "text/plain", "Error on create User.");
-  // }
+  if (userService.create(user)){
+    std::string jsonUser = userSerializer.createJson(user);
+    webServer.send(200, "application/Json", jsonUser.c_str());
+  } else {
+    webServer.send(500, "text/plain", "Error on create User.");
+  }
 }
 
 CustomServer::CustomServer(const char *apSsid, const char *apPassword) {
   this->apSsid = apSsid;
   this->apPassword = apPassword;
+  Serial.println("Instanciando CustomServer");
 }
 
 void CustomServer::createAccessPoint() {
@@ -72,11 +78,14 @@ void CustomServer::createRoutes() {
   Serial.println("Creating Server routes...");
 
   webServer.on("/", indexHandler);
-  webServer.on("/index.css", cssHandler);
-  webServer.on("/vendor.js", indexJsHandler);
-  webServer.on("/index.js", vendorJsHandler);
+  // webServer.on("/index.css", cssHandler);
+  // webServer.on("/vendor.js", indexJsHandler);
+  // webServer.on("/index.js", vendorJsHandler);
 
   webServer.on("/user", HTTP_POST, createUserHandler);
+  webServer.on("/user", HTTP_GET, createUserHandler);
+
+  webServer.onNotFound(notFoundHandler);
 }
 
 void CustomServer::begin() {
@@ -87,6 +96,7 @@ void CustomServer::init() {
   createAccessPoint();
   createRoutes();
   begin();
+  userService.init();
 }
 
 void CustomServer::handleClient() {

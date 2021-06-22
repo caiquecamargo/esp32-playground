@@ -79,5 +79,5 @@ int Repository::exec(std::string sql) {
   Serial.println();
   printResultSet();
 
-  return rc;
+  return rc == SQLITE_OK;
 };

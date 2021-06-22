@@ -8,9 +8,7 @@ const static std::string FIND_SQL = "SELECT * FROM {0}";
 const static std::string FIND_BY_ID_SQL = "SELECT * FROM {0} WHERE card_id = '{1}'";
 const static std::string DELETE_SQL = "DELETE FROM {0} WHERE card_id = '{1}'";
 
-UserService::UserService(std::string fileName) : Repository(fileName, "user_table") {
-  init();
-};
+UserService::UserService(std::string fileName) : Repository(fileName, "user_table") { };
 
 void UserService::cleanResultSet() {
   resultSet.clear();

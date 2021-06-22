@@ -16,6 +16,7 @@ class Repository {
     Repository(std::string fileName, std::string tableName);
     int isOpen();
     void close();
+    void init();
     virtual void printResultSet() = 0;
   protected:
     sqlite3 *db;
@@ -23,7 +24,6 @@ class Repository {
     int opened;
     std::string fileName;
     std::string tableName;
-    void init();
     void open();
     int initialize();
     virtual int createTableIfNotExists() = 0;
