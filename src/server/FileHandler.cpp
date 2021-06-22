@@ -1,4 +1,5 @@
 #include "server/FileHandler.h"
+#include <sstream>
 
 void FileHandler::sendFile(const char* fileName, const char* fileType, WebServer& webServer) {
   Log::logS("FileHandler", "Reading file " + (std::string) fileName);
@@ -13,7 +14,10 @@ void FileHandler::sendFile(const char* fileName, const char* fileType, WebServer
   file.read((uint8_t *)buffer, fileSize);
   buffer[fileSize] = '\0';
 
-  Serial.println(buffer);
+  std::stringstream ss;
+  ss << "" << fileSize;
+
+  Log::logS("FileHandler", "Opened File: " + (std::string) fileName + ", Size: " + ss.str());
 
   file.close();
 

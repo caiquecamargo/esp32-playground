@@ -34,6 +34,8 @@ void vendorJsHandler() {
 }
 
 void notFoundHandler() {
+  serverLog();
+  Log::logS("Server", "Resource not found");
   webServer.send(404, "text/plain", "Resource not found or not exists.");
 }
 
@@ -76,7 +78,7 @@ void CustomServer::createRoutes() {
   log("Creating Server routes...");
 
   webServer.on("/", indexHandler);
-  // webServer.on("/index.css", cssHandler);
+  webServer.on("/index.css", cssHandler);
   // webServer.on("/vendor.js", indexJsHandler);
   // webServer.on("/index.js", vendorJsHandler);
 
