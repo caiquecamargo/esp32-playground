@@ -1,5 +1,4 @@
 #include <WiFi.h>
-#include <WebServer.h>
 #include "ESPAsyncWebServer.h"
 #include "json/UserSerializer.h"
 #include "repository/UserService.h"
@@ -17,10 +16,14 @@ class CustomServer : public Log {
     UserSerializer userSerializer;
     UserService userService;
     void createAccessPoint();
+    void serveStatic();
     void createRoutes();
     void begin();
     void serverLog(std::string method, std::string uri);
     void notFoundHandler(AsyncWebServerRequest *request);
     void createUserHandler(AsyncWebServerRequest *request);
     void getUserHandler(AsyncWebServerRequest *request);
+    void updateUserHandler(AsyncWebServerRequest *request);
+    void deleteUserHandler(AsyncWebServerRequest *request);
+    int redirectHandler(AsyncWebServerRequest *request);
 };
