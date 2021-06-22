@@ -1,24 +1,17 @@
 #include "server/CustomServer.h"
 #include "time.h"
 
-AsyncWebServer webServer(80);
-UserSerializer userSerializer;
-UserService userService = UserService("/spiffs/test.db");
-
-const char* www_username = "admin";
-const char* www_password = "esp32";
-
-void serverLog(std::string method, std::string uri) {
+void CustomServer::serverLog(std::string method, std::string uri) {
   Log::logS("Server", method + " request on: " + uri);
 }
 
-void notFoundHandler(AsyncWebServerRequest *request) {
+void CustomServer::notFoundHandler(AsyncWebServerRequest *request) {
   serverLog(request->methodToString(), request->url().c_str());
   Log::logS("Server", "Resource not found");
   request->send(404, "text/plain", "Resource not found or not exists.");
 }
 
-void createUserHandler(AsyncWebServerRequest *request) {
+void CustomServer::createUserHandler(AsyncWebServerRequest *request) {
   serverLog(request->methodToString(), request->url().c_str());
 
   srand(time(NULL));
@@ -40,7 +33,7 @@ void createUserHandler(AsyncWebServerRequest *request) {
   }
 }
 
-void getUserHandler(AsyncWebServerRequest *request) {
+void CustomServer::getUserHandler(AsyncWebServerRequest *request) {
   serverLog(request->methodToString(), request->url().c_str());
 
   if (request->hasParam("name")) {
@@ -57,10 +50,13 @@ void getUserHandler(AsyncWebServerRequest *request) {
   request->send(200, "application/Json", jsonUser.c_str());
 }
 
-CustomServer::CustomServer(const char *apSsid, const char *apPassword) : Log("Server") {
-  this->apSsid = apSsid;
-  this->apPassword = apPassword;
-}
+CustomServer::CustomServer(const char *apSsid, const char *apPassword) : 
+  Log("Server"),
+  apSsid(apSsid),
+  apPassword(apPassword),
+  webServer(AsyncWebServer(80)),
+  userService(UserService("/spiffs/test.db"))
+{}
 
 void CustomServer::createAccessPoint() {
   log("Creating AccessPoint...");
@@ -78,10 +74,10 @@ void CustomServer::createRoutes() {
   webServer.serveStatic("/vendor.js", SPIFFS, "/vendor.js");
   webServer.serveStatic("/index.js", SPIFFS, "/index.js");
 
-  webServer.on("/user", HTTP_POST, createUserHandler);
-  webServer.on("/user", HTTP_GET, getUserHandler);
+  webServer.on("/user", HTTP_POST, std::bind(&CustomServer::createUserHandler, this, std::placeholders::_1));
+  webServer.on("/user", HTTP_GET, std::bind(&CustomServer::getUserHandler, this, std::placeholders::_1));
 
-  webServer.onNotFound(notFoundHandler);
+  webServer.onNotFound(std::bind(&CustomServer::notFoundHandler, this, std::placeholders::_1));
 }
 
 void CustomServer::begin() {

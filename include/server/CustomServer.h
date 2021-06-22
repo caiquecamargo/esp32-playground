@@ -13,7 +13,14 @@ class CustomServer : public Log {
     const char *apSsid;
     const char *apPassword;
     IPAddress ip;
+    AsyncWebServer webServer;
+    UserSerializer userSerializer;
+    UserService userService;
     void createAccessPoint();
     void createRoutes();
     void begin();
+    void serverLog(std::string method, std::string uri);
+    void notFoundHandler(AsyncWebServerRequest *request);
+    void createUserHandler(AsyncWebServerRequest *request);
+    void getUserHandler(AsyncWebServerRequest *request);
 };
