@@ -10,6 +10,7 @@ class UserService : public Repository  {
     int update(User data);
     int findAll();
     int findById(std::string cardId);
+    int findByName(std::string name);
     int deleteItem(std::string cardId);
   protected:
     int createTableIfNotExists();

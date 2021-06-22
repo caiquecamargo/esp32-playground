@@ -13,13 +13,13 @@ void serverLog(std::string method, std::string uri) {
 }
 
 void notFoundHandler(AsyncWebServerRequest *request) {
-  serverLog(request->methodToString(), request->host().c_str());
+  serverLog(request->methodToString(), request->url().c_str());
   Log::logS("Server", "Resource not found");
   request->send(404, "text/plain", "Resource not found or not exists.");
 }
 
 void createUserHandler(AsyncWebServerRequest *request) {
-  serverLog(request->methodToString(), request->host().c_str());
+  serverLog(request->methodToString(), request->url().c_str());
 
   srand(time(NULL));
 
@@ -40,6 +40,23 @@ void createUserHandler(AsyncWebServerRequest *request) {
   }
 }
 
+void getUserHandler(AsyncWebServerRequest *request) {
+  serverLog(request->methodToString(), request->url().c_str());
+
+  if (request->hasParam("name")) {
+    std::string name = request->getParam("name")->value().c_str();
+    userService.findByName(name);
+  } else if (request->hasParam("id")) {
+    std::string id = request->getParam("id")->value().c_str();
+    userService.findById(id);
+  } else {
+    userService.findAll();
+  }
+
+  std::string jsonUser = userSerializer.createJson(userService.resultSet);
+  request->send(200, "application/Json", jsonUser.c_str());
+}
+
 CustomServer::CustomServer(const char *apSsid, const char *apPassword) : Log("Server") {
   this->apSsid = apSsid;
   this->apPassword = apPassword;
@@ -50,7 +67,7 @@ void CustomServer::createAccessPoint() {
   WiFi.mode(WIFI_AP);
   WiFi.softAP(apSsid, apPassword);
   ip = WiFi.softAPIP();
-  // log("IP Address: " + ip);
+  log("IP Address: " + (std::string) ip.toString().c_str());
 }
 
 void CustomServer::createRoutes() {
@@ -62,7 +79,7 @@ void CustomServer::createRoutes() {
   webServer.serveStatic("/index.js", SPIFFS, "/index.js");
 
   webServer.on("/user", HTTP_POST, createUserHandler);
-  webServer.on("/user", HTTP_GET, createUserHandler);
+  webServer.on("/user", HTTP_GET, getUserHandler);
 
   webServer.onNotFound(notFoundHandler);
 }
@@ -77,7 +94,3 @@ void CustomServer::init() {
   begin();
   userService.init();
 }
-
-// void CustomServer::handleClient() {
-//   webServer.handleClient();
-// }

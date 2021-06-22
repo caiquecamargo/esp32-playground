@@ -6,6 +6,7 @@ const static std::string CREATE_SQL = "INSERT INTO {0} VALUES('{1}', '{2}')";
 const static std::string UPDATE_SQL = "UPDATE {0} SET name = '{1}' WHERE card_id = '{2}'";
 const static std::string FIND_SQL = "SELECT * FROM {0}";
 const static std::string FIND_BY_ID_SQL = "SELECT * FROM {0} WHERE card_id = '{1}'";
+const static std::string FIND_BY_NAME_SQL = "SELECT * FROM {0} WHERE name LIKE '%{1}%'";
 const static std::string DELETE_SQL = "DELETE FROM {0} WHERE card_id = '{1}'";
 
 UserService::UserService(std::string fileName) : Repository(fileName, "user_table") { };
@@ -94,6 +95,14 @@ int UserService::findById(std::string cardId) {
   std::string sql = FIND_BY_ID_SQL;
   replace(sql, "{0}", tableName);
   replace(sql, "{1}", cardId);
+
+  return exec(sql);
+};
+
+int UserService::findByName(std::string name) {
+  std::string sql = FIND_BY_NAME_SQL;
+  replace(sql, "{0}", tableName);
+  replace(sql, "{1}", name);
 
   return exec(sql);
 };
