@@ -12,9 +12,11 @@ std::string UserSerializer::createJson (User user) {
 std::string UserSerializer::createJson (std::vector<User> users) {
   clear();
 
+  if (users.size() == 0) jsonDocument["data"][0] = NULL;
+
   for (int i = 0; i < users.size(); i++) {
-    jsonDocument["users"][i]["cardId"] = users[i].cardId;
-    jsonDocument["users"][i]["name"] = users[i].name;
+    jsonDocument["data"][i]["cardId"] = users[i].cardId;
+    jsonDocument["data"][i]["name"] = users[i].name;
   }
 
   return stringify();

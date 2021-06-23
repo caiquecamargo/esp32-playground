@@ -2,7 +2,7 @@
 
 class JSON {
   protected:
-    StaticJsonDocument<250> jsonDocument;
+    StaticJsonDocument<1000> jsonDocument;
     void clear();
     std::string stringify();
 };

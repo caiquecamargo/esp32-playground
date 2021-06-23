@@ -25,5 +25,7 @@ class CustomServer : public Log {
     void getUserHandler(AsyncWebServerRequest *request);
     void updateUserHandler(AsyncWebServerRequest *request);
     void deleteUserHandler(AsyncWebServerRequest *request);
+    void optionsHandler(AsyncWebServerRequest *request);
     int redirectHandler(AsyncWebServerRequest *request);
+    std::string getPathParam(std::string root, std::string url);
 };

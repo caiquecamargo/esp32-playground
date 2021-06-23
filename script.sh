@@ -1,8 +1,8 @@
 IP=192.168.4.1
 URI=user
-DATA="{\"key1\":\"value1\", \"key2\":\"value2\"}"
+DATA="name=cabriola&id=1111"
 
 curl \
-  "http://$IP/$URI" -i -X POST \
+  "http://$IP/$URI" -i -X PUT \
   -H 'Content-Type: text/plain' \
-  -d "test"
+  -d $DATA
