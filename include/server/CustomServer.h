@@ -13,6 +13,7 @@ class CustomServer : public Log {
     const char *apPassword;
     IPAddress ip;
     AsyncWebServer webServer;
+    AsyncWebSocket webSocket;
     UserSerializer userSerializer;
     UserService userService;
     void createAccessPoint();
