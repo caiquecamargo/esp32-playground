@@ -20,6 +20,13 @@ std::string CustomServer::getPathParam(std::string root, std::string url) {
   return url;
 }
 
+int CustomServer::hasPathParam(std::string root, std::string url) {
+  int rootSize = root.size();
+  url.erase(0, rootSize + 1);
+
+  return url.size();
+}
+
 void CustomServer::optionsHandler(AsyncWebServerRequest *request) {
   std::string method = request->methodToString();
   AsyncWebServerResponse *response = request->beginResponse(200);
@@ -39,9 +46,9 @@ void CustomServer::notFoundHandler(AsyncWebServerRequest *request) {
   if (method.compare("OPTIONS")) response->addHeader("status", "OK");
 
   serverLog(request->methodToString(), request->url().c_str());
-  log("Resource not found.");
-
-  request->send(response);
+  log("Resource not found. Redirecting to /");
+  
+  request->redirect("/");
 }
 
 int CustomServer::redirectHandler(AsyncWebServerRequest *request) {
@@ -93,17 +100,22 @@ void CustomServer::getUserHandler(AsyncWebServerRequest *request) {
   serverLog(request->methodToString(), request->url().c_str());
   log("Performing GET USER handler...");
 
+  std::string url = request->url().c_str();
+  std::string jsonUser;
+
   if (request->hasParam("name")) {
     std::string name = request->getParam("name")->value().c_str();
     userService.findByName(name);
-  } else if (request->hasParam("id")) {
-    std::string id = request->getParam("id")->value().c_str();
+    jsonUser = userSerializer.createJson(userService.resultSet);
+  } else if (hasPathParam("/user", url)) {
+    std::string id = getPathParam("/user", url);
     userService.findById(id);
+    jsonUser = userSerializer.createJson(userService.resultSet[0]);
   } else {
     userService.findAll();
+    jsonUser = userSerializer.createJson(userService.resultSet);
   }
 
-  std::string jsonUser = userSerializer.createJson(userService.resultSet);
   request->send(200, "application/Json", jsonUser.c_str());
 }
 

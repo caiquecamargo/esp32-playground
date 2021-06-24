@@ -28,4 +28,5 @@ class CustomServer : public Log {
     void optionsHandler(AsyncWebServerRequest *request);
     int redirectHandler(AsyncWebServerRequest *request);
     std::string getPathParam(std::string root, std::string url);
+    int hasPathParam(std::string root, std::string url);
 };

@@ -3,8 +3,8 @@
 std::string UserSerializer::createJson (User user) {
   clear();
 
-  jsonDocument["cardId"] = user.cardId;
-  jsonDocument["name"] = user.name;
+  jsonDocument["data"]["cardId"] = user.cardId;
+  jsonDocument["data"]["name"] = user.name;
 
   return stringify();
 }

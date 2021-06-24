@@ -6,15 +6,15 @@ GET http://192.168.4.1/user
 
 ###
 
-GET http://192.168.4.1/user?name=joselito
+GET http://192.168.4.1/user?name=cab
 
 ###
 
-GET http://192.168.4.1/user?id=1358
+GET http://192.168.4.1/user/1145
 
 ###
 
-POST http://192.168.4.1/user/1149?name=cabriolo
+POST http://192.168.4.1/user/1149?name=teste
 
 ###
 
