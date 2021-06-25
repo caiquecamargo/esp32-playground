@@ -1,5 +1,7 @@
 #include "server/CustomServer.h"
-#include "time.h"
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+#include <esp_ipc.h>
 
 CustomServer::CustomServer(const char *apSsid, const char *apPassword) : 
   Log("Server"),
@@ -78,8 +80,6 @@ void CustomServer::createUserHandler(AsyncWebServerRequest *request) {
   serverLog(request->methodToString(), request->url().c_str());
   log("Performing CREATE USER handler...");
 
-  srand(time(NULL));
-
   if (!request->hasParam("name")) {
     request->send(400, "text/plain", "User does have a name to complete the task!");
     return;
@@ -87,7 +87,7 @@ void CustomServer::createUserHandler(AsyncWebServerRequest *request) {
 
   User user;
   user.name = request->getParam("name")->value().c_str();
-  user.cardId = String(rand() % 1000 + 1000).c_str();
+  user.cardId = Utils::generateRandomId();
 
   if (userService.create(user)){
     std::string jsonUser = userSerializer.createJson(user);
@@ -157,11 +157,44 @@ void CustomServer::deleteUserHandler(AsyncWebServerRequest *request) {
   }
 }
 
+struct UserMsg{
+  std::string message;
+  AsyncWebSocketClient* client;
+  // AsyncWebSocket* server;
+};
+
+void sendMessage(void *arg) {
+  UserMsg* usermsg = (UserMsg*) arg;
+  Serial.printf("UserMsg: %s\n", usermsg->message.c_str());
+
+  // int count = 5;
+  // while(count){
+  //   vTaskDelay(1000);
+  //   count--;
+  //   Serial.printf("Task waiting ...\n");
+  // }
+
+  // User user;
+  // user.name = usermsg->message;
+  // user.cardId = Utils::generateRandomId();
+
+  // UserSerializer userSerializer;
+  Serial.printf("canSend: %s - ", usermsg->client->canSend() ? "true" : "false");
+  // Serial.printf(" id: %d - ", usermsg->client->id());
+  Serial.printf(" remoteIP: %s - ", usermsg->client->remoteIP().toString().c_str());
+  Serial.printf(" remotePort: %s\n", String(usermsg->client->remotePort()).c_str());
+
+  // std::string jsonUser = userSerializer.createJson(user);
+  // Serial.println(jsonUser.c_str());
+  // usermsg->client->text(jsonUser.c_str());
+
+  vTaskDelete(NULL);
+}
+
 void onEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len) {
+  vTaskDelay(10);
   if(type == WS_EVT_CONNECT){
     Serial.printf("ws[%s][%u] connect\n", server->url(), client->id());
-    client->printf("Hello Client %u :)", client->id());
-    client->ping();
   } else if(type == WS_EVT_DISCONNECT){
     Serial.printf("ws[%s][%u] disconnect\n", server->url(), client->id());
   } else if(type == WS_EVT_ERROR){
@@ -188,10 +221,41 @@ void onEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType 
       }
       Serial.printf("%s\n",msg.c_str());
 
-      if(info->opcode == WS_TEXT)
-        client->text("I got your text message");
-      else
-        client->binary("I got your binary message");
+      // int count = 500;
+      // while(count){
+      //   vTaskDelay(10);
+      //   if (count%100 == 0) Serial.printf("Task waiting %d ...\n", count/100);
+      //   count--;
+      // }
+
+      UserMsg userMsg;
+      userMsg.message = msg.c_str();
+      userMsg.client = client;
+      // userMsg.server = server;
+
+      xTaskCreate(sendMessage, "TaskSendMessage", 8192, (void*) &userMsg, 4, NULL);
+
+      // int count = 5;
+      
+      // User user;
+      // user.name = msg.c_str();
+      // user.cardId = Utils::generateRandomId();
+
+      // UserSerializer userSerializer;
+
+      // if (userService.create(user)){
+      // std::string jsonUser = userSerializer.createJson(user);
+      // Serial.println(jsonUser.c_str());
+      // client->text(jsonUser.c_str());
+      //   request->send(200, "application/Json", jsonUser.c_str());
+      // } else {
+      //   request->send(500, "text/plain", "Error on create User.");
+      // }
+
+      // if(info->opcode == WS_TEXT)
+      //   client->text("I got your text message");
+      // else
+      //   client->binary("I got your binary message");
     } else {
       //message is comprised of multiple frames or the frame is split into multiple packets
       if(info->index == 0){
@@ -246,13 +310,13 @@ void CustomServer::serveStatic() {
 void CustomServer::createRoutes() {
   log("Creating Server routes...");
 
-  // webServer.on("/user", HTTP_GET, std::bind(&CustomServer::getUserHandler, this, std::placeholders::_1));
-  // webServer.on("/user", HTTP_POST, std::bind(&CustomServer::createUserHandler, this, std::placeholders::_1));
-  // webServer.on("/user", HTTP_PUT, std::bind(&CustomServer::updateUserHandler, this, std::placeholders::_1));
-  // webServer.on("/user", HTTP_DELETE, std::bind(&CustomServer::deleteUserHandler, this, std::placeholders::_1));
-  // webServer.on("/*", HTTP_OPTIONS, std::bind(&CustomServer::optionsHandler, this, std::placeholders::_1));
+  webServer.on("/user", HTTP_GET, std::bind(&CustomServer::getUserHandler, this, std::placeholders::_1));
+  webServer.on("/user", HTTP_POST, std::bind(&CustomServer::createUserHandler, this, std::placeholders::_1));
+  webServer.on("/user", HTTP_PUT, std::bind(&CustomServer::updateUserHandler, this, std::placeholders::_1));
+  webServer.on("/user", HTTP_DELETE, std::bind(&CustomServer::deleteUserHandler, this, std::placeholders::_1));
+  webServer.on("/*", HTTP_OPTIONS, std::bind(&CustomServer::optionsHandler, this, std::placeholders::_1));
 
-  // webServer.onNotFound(std::bind(&CustomServer::notFoundHandler, this, std::placeholders::_1));
+  webServer.onNotFound(std::bind(&CustomServer::notFoundHandler, this, std::placeholders::_1));
 
   webSocket.onEvent(onEvent);
   webServer.addHandler(&webSocket);

@@ -3,6 +3,8 @@
 #include "server/CustomServer.h"
 #include "log/Log.h"
 #include <sstream>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 
 const char *apSsid = "esp32-playground";
 const char *apPassword = "123456789";
@@ -34,6 +36,7 @@ void printSPIFFSFiles()  {
 
 void setup() {
   Serial.begin(115200);
+  delay(100);
   // configureDateTime();
 
   if (!SPIFFS.begin()) {
@@ -47,4 +50,5 @@ void setup() {
 
 void loop() {
   // server.handleClient();
+  vTaskDelay(10);
 }

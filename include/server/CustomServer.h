@@ -3,6 +3,7 @@
 #include "json/UserSerializer.h"
 #include "repository/UserService.h"
 #include "log/Log.h"
+#include "utils/Utils.h"
 
 class CustomServer : public Log {
   public:
