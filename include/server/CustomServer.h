@@ -13,10 +13,10 @@ class CustomServer : public Log {
     const char *apSsid;
     const char *apPassword;
     IPAddress ip;
-    AsyncWebServer webServer;
-    AsyncWebSocket webSocket;
-    UserSerializer userSerializer;
-    UserService userService;
+    // AsyncWebServer webServer;
+    // AsyncWebSocket webSocket;
+    // UserSerializer userSerializer;
+    // UserService userService;
     void createAccessPoint();
     void serveStatic();
     void createRoutes();

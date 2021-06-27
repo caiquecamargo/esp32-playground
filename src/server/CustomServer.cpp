@@ -3,13 +3,124 @@
 #include <freertos/task.h>
 #include <esp_ipc.h>
 
+AsyncWebServer webServer(80);
+AsyncWebSocket webSocket("/ws");
+UserSerializer userSerializer;
+UserService userService("/spiffs/test.db");
+
+struct UserMsg{
+  std::string message;
+  uint32_t clientId;
+};
+
+UserMsg userMsg;
+
+void sendMessage(void *arg) {
+  Serial.printf("UserMsg: %s\n", userMsg.message.c_str());
+  Serial.printf("ClientId: %u\n", userMsg.clientId);
+
+  int count = 30;
+  while(count){
+    vTaskDelay(1000);
+    count--;
+    Serial.printf("Task waiting ...\n");
+  }
+
+  User user;
+  user.name = userMsg.message;
+  user.cardId = Utils::generateRandomId();
+
+  AsyncWebSocketClient* client = webSocket.client(userMsg.clientId);
+
+  if (userService.create(user)) {
+    std::string jsonUser = userSerializer.createJson(user);
+    Serial.println(jsonUser.c_str());
+
+    webSocket.text(userMsg.clientId, jsonUser.c_str());
+  } else {
+    Serial.println("Erro ao criar usuário.");
+  }
+
+  vTaskDelete(NULL);
+}
+
+void onEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len) {
+  if(type == WS_EVT_CONNECT){
+    Serial.printf("ws[%s][%u] connect\n", server->url(), client->id());
+  } else if(type == WS_EVT_DISCONNECT){
+    Serial.printf("ws[%s][%u] disconnect\n", server->url(), client->id());
+  } else if(type == WS_EVT_ERROR){
+    Serial.printf("ws[%s][%u] error(%u): %s\n", server->url(), client->id(), *((uint16_t*)arg), (char*)data);
+  } else if(type == WS_EVT_PONG){
+    Serial.printf("ws[%s][%u] pong[%u]: %s\n", server->url(), client->id(), len, (len)?(char*)data:"");
+  } else if(type == WS_EVT_DATA){
+    AwsFrameInfo * info = (AwsFrameInfo*)arg;
+    String msg = "";
+    if(info->final && info->index == 0 && info->len == len){
+      //the whole message is in a single frame and we got all of it's data
+      Serial.printf("ws[%s][%u] %s-message[%llu]: ", server->url(), client->id(), (info->opcode == WS_TEXT)?"text":"binary", info->len);
+
+      if(info->opcode == WS_TEXT){
+        for(size_t i=0; i < info->len; i++) {
+          msg += (char) data[i];
+        }
+      } else {
+        char buff[3];
+        for(size_t i=0; i < info->len; i++) {
+          sprintf(buff, "%02x ", (uint8_t) data[i]);
+          msg += buff ;
+        }
+      }
+      Serial.printf("%s\n",msg.c_str());
+
+      userMsg.message = msg.c_str();
+      userMsg.clientId = client->id();
+
+      xTaskCreate(sendMessage, "TaskSendMessage", 8192, NULL, 4, NULL);
+    } else {
+      //message is comprised of multiple frames or the frame is split into multiple packets
+      if(info->index == 0){
+        if(info->num == 0)
+          Serial.printf("ws[%s][%u] %s-message start\n", server->url(), client->id(), (info->message_opcode == WS_TEXT)?"text":"binary");
+        Serial.printf("ws[%s][%u] frame[%u] start[%llu]\n", server->url(), client->id(), info->num, info->len);
+      }
+
+      Serial.printf("ws[%s][%u] frame[%u] %s[%llu - %llu]: ", server->url(), client->id(), info->num, (info->message_opcode == WS_TEXT)?"text":"binary", info->index, info->index + len);
+
+      if(info->opcode == WS_TEXT){
+        for(size_t i=0; i < len; i++) {
+          msg += (char) data[i];
+        }
+      } else {
+        char buff[3];
+        for(size_t i=0; i < len; i++) {
+          sprintf(buff, "%02x ", (uint8_t) data[i]);
+          msg += buff ;
+        }
+      }
+      Serial.printf("%s\n",msg.c_str());
+
+      if((info->index + len) == info->len){
+        Serial.printf("ws[%s][%u] frame[%u] end[%llu]\n", server->url(), client->id(), info->num, info->len);
+        if(info->final){
+          Serial.printf("ws[%s][%u] %s-message end\n", server->url(), client->id(), (info->message_opcode == WS_TEXT)?"text":"binary");
+          if(info->message_opcode == WS_TEXT)
+            client->text("I got your text message");
+          else
+            client->binary("I got your binary message");
+        }
+      }
+    }
+  }
+}
+
 CustomServer::CustomServer(const char *apSsid, const char *apPassword) : 
   Log("Server"),
   apSsid(apSsid),
-  apPassword(apPassword),
-  webServer(AsyncWebServer(80)),
-  webSocket(AsyncWebSocket("/ws")),
-  userService(UserService("/spiffs/test.db"))
+  apPassword(apPassword)
+  // webServer(AsyncWebServer(80)),
+  // webSocket(AsyncWebSocket("/ws")),
+  // userService(UserService("/spiffs/test.db"))
 {}
 
 void CustomServer::serverLog(std::string method, std::string uri) {
@@ -154,142 +265,6 @@ void CustomServer::deleteUserHandler(AsyncWebServerRequest *request) {
     request->send(200, "text/plain", id.c_str());
   } else {
     request->send(500, "text/plain", "Error on delete User or User not exists.");
-  }
-}
-
-struct UserMsg{
-  std::string message;
-  AsyncWebSocketClient* client;
-  // AsyncWebSocket* server;
-};
-
-void sendMessage(void *arg) {
-  UserMsg* usermsg = (UserMsg*) arg;
-  Serial.printf("UserMsg: %s\n", usermsg->message.c_str());
-
-  // int count = 5;
-  // while(count){
-  //   vTaskDelay(1000);
-  //   count--;
-  //   Serial.printf("Task waiting ...\n");
-  // }
-
-  // User user;
-  // user.name = usermsg->message;
-  // user.cardId = Utils::generateRandomId();
-
-  // UserSerializer userSerializer;
-  Serial.printf("canSend: %s - ", usermsg->client->canSend() ? "true" : "false");
-  // Serial.printf(" id: %d - ", usermsg->client->id());
-  Serial.printf(" remoteIP: %s - ", usermsg->client->remoteIP().toString().c_str());
-  Serial.printf(" remotePort: %s\n", String(usermsg->client->remotePort()).c_str());
-
-  // std::string jsonUser = userSerializer.createJson(user);
-  // Serial.println(jsonUser.c_str());
-  // usermsg->client->text(jsonUser.c_str());
-
-  vTaskDelete(NULL);
-}
-
-void onEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len) {
-  vTaskDelay(10);
-  if(type == WS_EVT_CONNECT){
-    Serial.printf("ws[%s][%u] connect\n", server->url(), client->id());
-  } else if(type == WS_EVT_DISCONNECT){
-    Serial.printf("ws[%s][%u] disconnect\n", server->url(), client->id());
-  } else if(type == WS_EVT_ERROR){
-    Serial.printf("ws[%s][%u] error(%u): %s\n", server->url(), client->id(), *((uint16_t*)arg), (char*)data);
-  } else if(type == WS_EVT_PONG){
-    Serial.printf("ws[%s][%u] pong[%u]: %s\n", server->url(), client->id(), len, (len)?(char*)data:"");
-  } else if(type == WS_EVT_DATA){
-    AwsFrameInfo * info = (AwsFrameInfo*)arg;
-    String msg = "";
-    if(info->final && info->index == 0 && info->len == len){
-      //the whole message is in a single frame and we got all of it's data
-      Serial.printf("ws[%s][%u] %s-message[%llu]: ", server->url(), client->id(), (info->opcode == WS_TEXT)?"text":"binary", info->len);
-
-      if(info->opcode == WS_TEXT){
-        for(size_t i=0; i < info->len; i++) {
-          msg += (char) data[i];
-        }
-      } else {
-        char buff[3];
-        for(size_t i=0; i < info->len; i++) {
-          sprintf(buff, "%02x ", (uint8_t) data[i]);
-          msg += buff ;
-        }
-      }
-      Serial.printf("%s\n",msg.c_str());
-
-      // int count = 500;
-      // while(count){
-      //   vTaskDelay(10);
-      //   if (count%100 == 0) Serial.printf("Task waiting %d ...\n", count/100);
-      //   count--;
-      // }
-
-      UserMsg userMsg;
-      userMsg.message = msg.c_str();
-      userMsg.client = client;
-      // userMsg.server = server;
-
-      xTaskCreate(sendMessage, "TaskSendMessage", 8192, (void*) &userMsg, 4, NULL);
-
-      // int count = 5;
-      
-      // User user;
-      // user.name = msg.c_str();
-      // user.cardId = Utils::generateRandomId();
-
-      // UserSerializer userSerializer;
-
-      // if (userService.create(user)){
-      // std::string jsonUser = userSerializer.createJson(user);
-      // Serial.println(jsonUser.c_str());
-      // client->text(jsonUser.c_str());
-      //   request->send(200, "application/Json", jsonUser.c_str());
-      // } else {
-      //   request->send(500, "text/plain", "Error on create User.");
-      // }
-
-      // if(info->opcode == WS_TEXT)
-      //   client->text("I got your text message");
-      // else
-      //   client->binary("I got your binary message");
-    } else {
-      //message is comprised of multiple frames or the frame is split into multiple packets
-      if(info->index == 0){
-        if(info->num == 0)
-          Serial.printf("ws[%s][%u] %s-message start\n", server->url(), client->id(), (info->message_opcode == WS_TEXT)?"text":"binary");
-        Serial.printf("ws[%s][%u] frame[%u] start[%llu]\n", server->url(), client->id(), info->num, info->len);
-      }
-
-      Serial.printf("ws[%s][%u] frame[%u] %s[%llu - %llu]: ", server->url(), client->id(), info->num, (info->message_opcode == WS_TEXT)?"text":"binary", info->index, info->index + len);
-
-      if(info->opcode == WS_TEXT){
-        for(size_t i=0; i < len; i++) {
-          msg += (char) data[i];
-        }
-      } else {
-        char buff[3];
-        for(size_t i=0; i < len; i++) {
-          sprintf(buff, "%02x ", (uint8_t) data[i]);
-          msg += buff ;
-        }
-      }
-      Serial.printf("%s\n",msg.c_str());
-
-      if((info->index + len) == info->len){
-        Serial.printf("ws[%s][%u] frame[%u] end[%llu]\n", server->url(), client->id(), info->num, info->len);
-        if(info->final){
-          Serial.printf("ws[%s][%u] %s-message end\n", server->url(), client->id(), (info->message_opcode == WS_TEXT)?"text":"binary");
-          if(info->message_opcode == WS_TEXT)
-            client->text("I got your text message");
-          else
-            client->binary("I got your binary message");
-        }
-      }
-    }
   }
 }
 
