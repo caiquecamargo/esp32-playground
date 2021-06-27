@@ -32,15 +32,19 @@ void sendMessage(void *arg) {
 
   AsyncWebSocketClient* client = webSocket.client(userMsg.clientId);
 
-  if (userService.create(user)) {
-    std::string jsonUser = userSerializer.createJson(user);
-    Serial.println(jsonUser.c_str());
+  if (client->canSend()) {
+    if (userService.create(user)) {
+      std::string jsonUser = userSerializer.createJson(user);
+      Serial.println(jsonUser.c_str());
 
-    webSocket.text(userMsg.clientId, jsonUser.c_str());
+      webSocket.text(userMsg.clientId, jsonUser.c_str());
+    } else {
+      Serial.println("Erro ao criar usuário.");
+    }
   } else {
     Serial.println("Erro ao criar usuário.");
   }
-
+  
   vTaskDelete(NULL);
 }
 
