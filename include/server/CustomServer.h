@@ -4,6 +4,8 @@
 #include "repository/UserService.h"
 #include "log/Log.h"
 #include "utils/Utils.h"
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 
 class CustomServer : public Log {
   public:

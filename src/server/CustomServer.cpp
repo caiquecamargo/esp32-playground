@@ -1,7 +1,4 @@
 #include "server/CustomServer.h"
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
-#include <esp_ipc.h>
 
 AsyncWebServer webServer(80);
 AsyncWebSocket webSocket("/ws");

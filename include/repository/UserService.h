@@ -1,6 +1,9 @@
 #include "Repository.h" 
 #include "model/User.h"
 
+#ifndef USER_SERVICE_H
+#define USER_SERVICE_H
+
 class UserService : public Repository  {
   public: 
     std::vector<User> resultSet;
@@ -18,3 +21,5 @@ class UserService : public Repository  {
     void cleanResultSet();
     void PopulateResultSet(std::vector<std::vector<std::string>> *temp);
 };
+
+#endif

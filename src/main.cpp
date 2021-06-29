@@ -3,11 +3,16 @@
 #include "server/CustomServer.h"
 #include "log/Log.h"
 #include <sstream>
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
+#include <SPI.h>
+#include <MFRC522.h>
+#include "rfid/RFID.h"
 
 const char *apSsid = "esp32-playground";
 const char *apPassword = "123456789";
+
+#define SS_PIN 10
+#define RST_PIN 9
+MFRC522 mfrc522(SS_PIN, RST_PIN);
 
 CustomServer server(apSsid, apPassword);
 
@@ -37,17 +42,18 @@ void printSPIFFSFiles()  {
 void setup() {
   Serial.begin(115200);
   delay(100);
-  // configureDateTime();
-
+  
   if (!SPIFFS.begin()) {
     Log::logS("SPIFFS", "Failed to mount file system.");
   }
 
   printSPIFFSFiles();
 
+  SPI.begin();
+  mfrc522.PCD_Init();
+  RFID rfid = RFID(mfrc522);
+
   server.init();
 }
 
-void loop() {
-  // server.handleClient();
-}
+void loop() {}
