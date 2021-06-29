@@ -17,9 +17,6 @@ UserMsg userMsg;
 const static int WEBSOCKET_REQUEST_TIMEOUT = 3000;
 
 void sendMessage(void *arg) {
-  Serial.printf("UserMsg: %s\n", userMsg.message.c_str());
-  Serial.printf("ClientId: %u\n", userMsg.clientId);
-
   int count = WEBSOCKET_REQUEST_TIMEOUT;
   while(count){
     vTaskDelay(10);
@@ -42,26 +39,36 @@ void sendMessage(void *arg) {
     }
   }
     
-  
   vTaskDelete(NULL);
 }
 
 void onEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len) {
+  const std::string REPOSITORY = "ws[" + (std::string) server->url() + 
+                                 (std::string) "][" + 
+                                 (std::string) String(client->id()).c_str() + 
+                                 (std::string)"]";
   if(type == WS_EVT_CONNECT){
-    Serial.printf("ws[%s][%u] connect\n", server->url(), client->id());
+    Log::logS(REPOSITORY, "connect");
   } else if(type == WS_EVT_DISCONNECT){
-    Serial.printf("ws[%s][%u] disconnect\n", server->url(), client->id());
+    Log::logS(REPOSITORY, "disconnect");
   } else if(type == WS_EVT_ERROR){
-    Serial.printf("ws[%s][%u] error(%u): %s\n", server->url(), client->id(), *((uint16_t*)arg), (char*)data);
+    Log::logS(REPOSITORY, 
+      "error(" + 
+      (std::string) String(*((uint16_t*)arg)).c_str() + 
+      (std::string) "): " +
+      (std::string) (char*)data
+    );
   } else if(type == WS_EVT_PONG){
-    Serial.printf("ws[%s][%u] pong[%u]: %s\n", server->url(), client->id(), len, (len)?(char*)data:"");
+    Log::logS(REPOSITORY, 
+      "pong[" + 
+      (std::string) String(len).c_str() + 
+      (std::string) "]: " +
+      (std::string) ((len)?(char*)data:"")
+    );
   } else if(type == WS_EVT_DATA){
     AwsFrameInfo * info = (AwsFrameInfo*)arg;
-    String msg = "";
+    std::string msg = "";
     if(info->final && info->index == 0 && info->len == len){
-      //the whole message is in a single frame and we got all of it's data
-      Serial.printf("ws[%s][%u] %s-message[%llu]: ", server->url(), client->id(), (info->opcode == WS_TEXT)?"text":"binary", info->len);
-
       if(info->opcode == WS_TEXT){
         for(size_t i=0; i < info->len; i++) {
           msg += (char) data[i];
@@ -73,45 +80,22 @@ void onEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType 
           msg += buff ;
         }
       }
-      Serial.printf("%s\n",msg.c_str());
 
-      userMsg.message = msg.c_str();
+      Log::logS(REPOSITORY, 
+        (info->opcode == WS_TEXT)?"text":"binary" + 
+        (std::string) "-message[" + 
+        (std::string) String((long)info->len).c_str() + 
+        (std::string) "]: " +
+        msg
+      );
+
+      userMsg.message = msg;
       userMsg.clientId = client->id();
 
       xTaskCreate(sendMessage, "TaskSendMessage", 8192, NULL, 4, NULL);
     } else {
-      //message is comprised of multiple frames or the frame is split into multiple packets
-      if(info->index == 0){
-        if(info->num == 0)
-          Serial.printf("ws[%s][%u] %s-message start\n", server->url(), client->id(), (info->message_opcode == WS_TEXT)?"text":"binary");
-        Serial.printf("ws[%s][%u] frame[%u] start[%llu]\n", server->url(), client->id(), info->num, info->len);
-      }
-
-      Serial.printf("ws[%s][%u] frame[%u] %s[%llu - %llu]: ", server->url(), client->id(), info->num, (info->message_opcode == WS_TEXT)?"text":"binary", info->index, info->index + len);
-
-      if(info->opcode == WS_TEXT){
-        for(size_t i=0; i < len; i++) {
-          msg += (char) data[i];
-        }
-      } else {
-        char buff[3];
-        for(size_t i=0; i < len; i++) {
-          sprintf(buff, "%02x ", (uint8_t) data[i]);
-          msg += buff ;
-        }
-      }
-      Serial.printf("%s\n",msg.c_str());
-
-      if((info->index + len) == info->len){
-        Serial.printf("ws[%s][%u] frame[%u] end[%llu]\n", server->url(), client->id(), info->num, info->len);
-        if(info->final){
-          Serial.printf("ws[%s][%u] %s-message end\n", server->url(), client->id(), (info->message_opcode == WS_TEXT)?"text":"binary");
-          if(info->message_opcode == WS_TEXT)
-            client->text("I got your text message");
-          else
-            client->binary("I got your binary message");
-        }
-      }
+      Log::logS(REPOSITORY, "Request type not accespted!");
+      client->text("Request type not accespted!");
     }
   }
 }
@@ -120,9 +104,6 @@ CustomServer::CustomServer(const char *apSsid, const char *apPassword) :
   Log("Server"),
   apSsid(apSsid),
   apPassword(apPassword)
-  // webServer(AsyncWebServer(80)),
-  // webSocket(AsyncWebSocket("/ws")),
-  // userService(UserService("/spiffs/test.db"))
 {}
 
 void CustomServer::serverLog(std::string method, std::string uri) {
@@ -154,8 +135,6 @@ void CustomServer::optionsHandler(AsyncWebServerRequest *request) {
 }
 
 void CustomServer::notFoundHandler(AsyncWebServerRequest *request) {
-  if (redirectHandler(request)) return;
-
   std::string method = request->methodToString();
   AsyncWebServerResponse *response = request->beginResponse(404, "text/plain", "Resource not found or not exists.");
 
@@ -167,28 +146,7 @@ void CustomServer::notFoundHandler(AsyncWebServerRequest *request) {
   request->redirect("/");
 }
 
-int CustomServer::redirectHandler(AsyncWebServerRequest *request) {
-  if (request->url().compareTo("/user") == 0) {
-    std::string method = request->methodToString();
-
-    if ( method.compare("PUT") == 0 ) {
-      log("Redirecting from " + method + " method...");
-      updateUserHandler(request);
-      return 1;
-    }
-
-    if ( method.compare("DELETE") == 0 ) {
-      log("Redirecting from " + method + " method...");
-      deleteUserHandler(request);
-      return 1;
-    }
-  }
-  
-  return 0;
-}
-
 void CustomServer::createUserHandler(AsyncWebServerRequest *request) {
-  if (redirectHandler(request)) return;
 
   serverLog(request->methodToString(), request->url().c_str());
   log("Performing CREATE USER handler...");

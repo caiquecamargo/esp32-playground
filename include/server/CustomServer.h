@@ -13,10 +13,6 @@ class CustomServer : public Log {
     const char *apSsid;
     const char *apPassword;
     IPAddress ip;
-    // AsyncWebServer webServer;
-    // AsyncWebSocket webSocket;
-    // UserSerializer userSerializer;
-    // UserService userService;
     void createAccessPoint();
     void serveStatic();
     void createRoutes();
@@ -28,7 +24,6 @@ class CustomServer : public Log {
     void updateUserHandler(AsyncWebServerRequest *request);
     void deleteUserHandler(AsyncWebServerRequest *request);
     void optionsHandler(AsyncWebServerRequest *request);
-    int redirectHandler(AsyncWebServerRequest *request);
     std::string getPathParam(std::string root, std::string url);
     int hasPathParam(std::string root, std::string url);
 };
