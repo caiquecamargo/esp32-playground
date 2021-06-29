@@ -4,7 +4,7 @@
 class UserService : public Repository  {
   public: 
     std::vector<User> resultSet;
-    UserService(std::string fileName);
+    UserService();
     void printResultSet();
     int create(User data);
     int update(User data);

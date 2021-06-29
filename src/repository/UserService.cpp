@@ -9,7 +9,10 @@ const static std::string FIND_BY_ID_SQL = "SELECT * FROM {0} WHERE card_id = '{1
 const static std::string FIND_BY_NAME_SQL = "SELECT * FROM {0} WHERE name LIKE '%{1}%'";
 const static std::string DELETE_SQL = "DELETE FROM {0} WHERE card_id = '{1}'";
 
-UserService::UserService(std::string fileName) : Repository(fileName, "user_table") { };
+const static char* FILE_NAME = "/spiffs/user.db";
+const static char* TABLE_NAME = "user_table";
+
+UserService::UserService() : Repository(FILE_NAME, TABLE_NAME) { };
 
 void UserService::cleanResultSet() {
   resultSet.clear();

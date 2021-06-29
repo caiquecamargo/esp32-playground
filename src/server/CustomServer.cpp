@@ -6,7 +6,7 @@
 AsyncWebServer webServer(80);
 AsyncWebSocket webSocket("/ws");
 UserSerializer userSerializer;
-UserService userService("/spiffs/test.db");
+UserService userService;
 
 struct UserMsg{
   std::string message;
@@ -14,36 +14,34 @@ struct UserMsg{
 };
 
 UserMsg userMsg;
+const static int WEBSOCKET_REQUEST_TIMEOUT = 3000;
 
 void sendMessage(void *arg) {
   Serial.printf("UserMsg: %s\n", userMsg.message.c_str());
   Serial.printf("ClientId: %u\n", userMsg.clientId);
 
-  int count = 30;
+  int count = WEBSOCKET_REQUEST_TIMEOUT;
   while(count){
-    vTaskDelay(1000);
+    vTaskDelay(10);
     count--;
-    Serial.printf("Task waiting ...\n");
+    if (count % 100 == 0) Serial.printf("Task waiting %d ...\n", count / 100);
   }
 
   User user;
   user.name = userMsg.message;
   user.cardId = Utils::generateRandomId();
 
-  AsyncWebSocketClient* client = webSocket.client(userMsg.clientId);
+  if (webSocket.hasClient(userMsg.clientId) &&
+    webSocket.client(userMsg.clientId)->canSend()) {
 
-  if (client->canSend()) {
     if (userService.create(user)) {
       std::string jsonUser = userSerializer.createJson(user);
-      Serial.println(jsonUser.c_str());
-
       webSocket.text(userMsg.clientId, jsonUser.c_str());
     } else {
-      Serial.println("Erro ao criar usuário.");
+      Log::logS("WS: Client " + (std::string) String(userMsg.clientId).c_str(), "Error ao criar usuário!");
     }
-  } else {
-    Serial.println("Erro ao criar usuário.");
   }
+    
   
   vTaskDelete(NULL);
 }
