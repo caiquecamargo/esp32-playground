@@ -6,13 +6,14 @@
 #include <SPI.h>
 #include <MFRC522.h>
 #include "rfid/RFID.h"
+#include "accessController/AccessController.h"
 
 const char *apSsid = "esp32-playground";
 const char *apPassword = "123456789";
 
-#define SS_PIN 10
-#define RST_PIN 9
-MFRC522 mfrc522(SS_PIN, RST_PIN);
+// #define SS_PIN 21
+// #define RST_PIN 22
+// MFRC522 mfrc522(SS_PIN, RST_PIN);
 
 CustomServer server(apSsid, apPassword);
 
@@ -50,10 +51,13 @@ void setup() {
   printSPIFFSFiles();
 
   SPI.begin();
-  mfrc522.PCD_Init();
-  RFID rfid = RFID(mfrc522);
+  // mfrc522.PCD_Init();
+  // RFID rfid = RFID(mfrc522);
+  AccessController accessController;
+  accessController.init();
 
-  server.init();
+  // server.init();
 }
 
-void loop() {}
+void loop() {
+}

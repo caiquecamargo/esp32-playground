@@ -11,8 +11,7 @@ class Utils
 {
 public:
   static std::string generateRandomId();
-  template<typename TInputIter>
-  static std::string make_hex_string(TInputIter first, TInputIter last);
+  static std::string makeHexString(byte* first, byte* last);
 };
 
 #endif

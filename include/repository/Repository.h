@@ -5,6 +5,9 @@
 #include <string>
 #include "log/Log.h"
 
+#ifndef REPOSITORY_H
+#define REPOSITORY_H
+
 bool replace(std::string& str, const std::string& from, const std::string& to);
 
 class Repository : public Log {
@@ -29,3 +32,5 @@ class Repository : public Log {
     int exec(std::string sql);
     virtual int exists(std::string cardId) = 0;
 };  
+
+#endif

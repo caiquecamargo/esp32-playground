@@ -8,13 +8,12 @@
 class AccessController : public Log
 {
 private:
-  RFID rfid;
-  UserService userService;
+  std::string name;
   void grant(User grantedUser);
-  void deny();
-  void checkCardValidity();
+  void deny(std::string id);
+  void checkCardValidity(std::string id);
   static void waitForACard(void *arg);
 public:
-  AccessController(RFID rfid);
+  AccessController();
   void init();
 };

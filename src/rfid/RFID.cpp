@@ -1,13 +1,18 @@
 #include "rfid/RFID.h"
 
-RFID::RFID(MFRC522 mfrc522) : mfrc522(mfrc522) {}
+#define SS_PIN 21
+#define RST_PIN 22
 
-int RFID::read() {
+MFRC522 mfrc522(SS_PIN, RST_PIN);
+
+RFID::RFID() : Log("RFID")  {}
+
+std::string RFID::read() {
   if (!mfrc522.PICC_IsNewCardPresent())
-    return 0;
+    return "";
 
   if (!mfrc522.PICC_ReadCardSerial())
-    return 0;
+    return "";
 
   byte readCard[4];
 
@@ -15,9 +20,15 @@ int RFID::read() {
     readCard[i] = mfrc522.uid.uidByte[i];
   }
 
-  cardId = Utils::make_hex_string(std::begin(readCard), std::end(readCard));
+  std::string id = Utils::makeHexString(std::begin(readCard), std::end(readCard));
+
+  log("Card read with ID -> " + id);
     
   mfrc522.PICC_HaltA();
 
-  return 1;
+  return id;
+}
+
+void RFID::init() {
+  mfrc522.PCD_Init();
 }

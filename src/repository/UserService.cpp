@@ -99,6 +99,8 @@ int UserService::findById(std::string cardId) {
   replace(sql, "{0}", tableName);
   replace(sql, "{1}", cardId);
 
+  Serial.println(sql.c_str());
+
   return exec(sql);
 };
 
