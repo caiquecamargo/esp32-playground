@@ -6,6 +6,11 @@
 #include "utils/Utils.h"
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
+#include "rfid/RFID.h"
+#include "mutex/mutex.h"
+
+#ifndef CUSTOM_SERVER_H
+#define CUSTOM_SERVER_H
 
 class CustomServer : public Log {
   public:
@@ -29,3 +34,5 @@ class CustomServer : public Log {
     std::string getPathParam(std::string root, std::string url);
     int hasPathParam(std::string root, std::string url);
 };
+
+#endif

@@ -4,6 +4,7 @@ AsyncWebServer webServer(80);
 AsyncWebSocket webSocket("/ws");
 UserSerializer userSerializer;
 UserService userService;
+RFID rfidServer;
 
 struct UserMsg{
   std::string message;
@@ -15,15 +16,23 @@ const static int WEBSOCKET_REQUEST_TIMEOUT = 3000;
 
 void sendMessage(void *arg) {
   int count = WEBSOCKET_REQUEST_TIMEOUT;
+  std::string id;
+  Serial.println("Running user create task...");
+  MutexController::take();
   while(count){
     vTaskDelay(10);
     count--;
     if (count % 100 == 0) Serial.printf("Task waiting %d ...\n", count / 100);
+    id = rfidServer.read();
+    if (id.compare("") != 0) {
+      break;
+    }
   }
+  MutexController::give();
 
   User user;
   user.name = userMsg.message;
-  user.cardId = Utils::generateRandomId();
+  user.cardId = id;
 
   if (webSocket.hasClient(userMsg.clientId) &&
     webSocket.client(userMsg.clientId)->canSend()) {
@@ -32,7 +41,9 @@ void sendMessage(void *arg) {
       std::string jsonUser = userSerializer.createJson(user);
       webSocket.text(userMsg.clientId, jsonUser.c_str());
     } else {
-      Log::logS("WS: Client " + (std::string) String(userMsg.clientId).c_str(), "Error ao criar usuário!");
+      std::string error = userSerializer.error("Cartão já cadastrado ou erro ao criar usuário!");
+      webSocket.text(userMsg.clientId, error.c_str());
+      Log::logS("WS: Client " + (std::string) String(userMsg.clientId).c_str(), "Erro ao criar usuário!");
     }
   }
     
@@ -89,7 +100,7 @@ void onEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType 
       userMsg.message = msg;
       userMsg.clientId = client->id();
 
-      xTaskCreate(sendMessage, "TaskSendMessage", 8192, NULL, 4, NULL);
+      xTaskCreate(sendMessage, "TaskSendMessage", 8192, NULL, 10, NULL);
     } else {
       Log::logS(REPOSITORY, "Request type not accespted!");
       client->text("Request type not accespted!");
@@ -267,4 +278,5 @@ void CustomServer::init() {
   createRoutes();
   begin();
   userService.init();
+  rfidServer.init();
 }

@@ -4,6 +4,10 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include "repository/UserService.h"
+#include "mutex/mutex.h"
+
+#ifndef ACCESS_CONTROLLER_H
+#define ACCESS_CONTROLLER_H
 
 class AccessController : public Log
 {
@@ -17,3 +21,5 @@ public:
   AccessController();
   void init();
 };
+
+#endif

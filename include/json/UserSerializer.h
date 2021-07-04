@@ -4,6 +4,7 @@
 
 class UserSerializer : public JSON {
   public:
+    std::string error(std::string error);
     std::string createJson(User user);
     std::string createJson(std::vector<User> users);
 };

@@ -25,11 +25,12 @@ void AccessController::waitForACard(void *pvParameters) {
   AccessController* accessControler = (AccessController*) pvParameters;
   std::string id;
   while(true) {
+    MutexController::take();
     id = rfid.read();
     if (id.compare("") != 0) {
       accessControler->checkCardValidity(id);
     }
-
+    MutexController::give();
     vTaskDelay(10);
   } 
 };

@@ -7,6 +7,7 @@
 #include <MFRC522.h>
 #include "rfid/RFID.h"
 #include "accessController/AccessController.h"
+#include "mutex/mutex.h"
 
 const char *apSsid = "esp32-playground";
 const char *apPassword = "123456789";
@@ -50,13 +51,15 @@ void setup() {
 
   printSPIFFSFiles();
 
+  MutexController::create();
+
   SPI.begin();
   // mfrc522.PCD_Init();
   // RFID rfid = RFID(mfrc522);
   AccessController accessController;
   accessController.init();
 
-  // server.init();
+  server.init();
 }
 
 void loop() {

@@ -1,5 +1,13 @@
 #include "json/UserSerializer.h"
 
+std::string UserSerializer::error (std::string error) {
+  clear();
+
+  jsonDocument["data"]["error"] = error;
+
+  return stringify();
+}
+
 std::string UserSerializer::createJson (User user) {
   clear();
 
