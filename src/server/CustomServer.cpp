@@ -12,17 +12,17 @@ struct UserMsg{
 };
 
 UserMsg userMsg;
-const static int WEBSOCKET_REQUEST_TIMEOUT = 3000;
+const static int WEBSOCKET_REQUEST_TIMEOUT = 1000;
 
 void sendMessage(void *arg) {
+  Log::logS("WS: Client " + (std::string) String(userMsg.clientId).c_str(), "Running user create task...");
   int count = WEBSOCKET_REQUEST_TIMEOUT;
   std::string id;
-  Serial.println("Running user create task...");
+
   MutexController::take();
   while(count){
     vTaskDelay(10);
     count--;
-    if (count % 100 == 0) Serial.printf("Task waiting %d ...\n", count / 100);
     id = rfidServer.read();
     if (id.compare("") != 0) {
       break;
@@ -30,23 +30,29 @@ void sendMessage(void *arg) {
   }
   MutexController::give();
 
-  User user;
-  user.name = userMsg.message;
-  user.cardId = id;
+  if (id.compare("") != 0){
+    User user;
+    user.name = userMsg.message;
+    user.cardId = id;
 
-  if (webSocket.hasClient(userMsg.clientId) &&
-    webSocket.client(userMsg.clientId)->canSend()) {
+    if (webSocket.hasClient(userMsg.clientId) &&
+      webSocket.client(userMsg.clientId)->canSend()) {
 
-    if (userService.create(user)) {
-      std::string jsonUser = userSerializer.createJson(user);
-      webSocket.text(userMsg.clientId, jsonUser.c_str());
-    } else {
-      std::string error = userSerializer.error("Cartão já cadastrado ou erro ao criar usuário!");
-      webSocket.text(userMsg.clientId, error.c_str());
-      Log::logS("WS: Client " + (std::string) String(userMsg.clientId).c_str(), "Erro ao criar usuário!");
+      if (userService.create(user)) {
+        std::string jsonUser = userSerializer.createJson(user);
+        webSocket.text(userMsg.clientId, jsonUser.c_str());
+      } else {
+        std::string error = userSerializer.error("Cartão já cadastrado ou erro ao criar usuário!");
+        webSocket.text(userMsg.clientId, error.c_str());
+        Log::logS("WS: Client " + (std::string) String(userMsg.clientId).c_str(), "Card already registered or error when creating user!");
+      }
     }
+  } else {
+    std::string error = userSerializer.error("Tempo de espera estourado!");
+    webSocket.text(userMsg.clientId, error.c_str());
+    Log::logS("WS: Client " + (std::string) String(userMsg.clientId).c_str(), "Overdue waiting time!");
   }
-    
+  
   vTaskDelete(NULL);
 }
 
