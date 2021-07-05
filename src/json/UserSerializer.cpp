@@ -3,7 +3,7 @@
 std::string UserSerializer::error (std::string error) {
   clear();
 
-  jsonDocument["data"]["error"] = error;
+  jsonDocument["error"] = error;
 
   return stringify();
 }
